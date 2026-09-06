@@ -29,4 +29,7 @@ return {
   zeroDamageMiss = true,
   -- engine/battle/core.asm:6283,6326 and effects.asm:414-415
   statusPenaltyIsBaked = true,
+  -- X ACCURACY sets USING_X_ACCURACY: MoveHitTest returns before any
+  -- accuracy math, so every move -- OHKO moves included -- can't miss.
+  xAccuracyNeverMiss = true,
 }

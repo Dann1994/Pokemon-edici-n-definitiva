@@ -30,4 +30,8 @@ return {
   zeroDamageMiss = false,
   -- burn / paralysis stat drops are recomputed, not baked once
   statusPenaltyIsBaked = false,
+  -- X ACCURACY raises the accuracy stat one stage (Gen 3 style) instead of
+  -- skipping the accuracy check outright -- so it no longer turns Fissure /
+  -- Guillotine / Horn Drill into guaranteed one-hit KOs.
+  xAccuracyNeverMiss = false,
 }

@@ -98,7 +98,10 @@ end
 T.check(Data.rulesets ~= nil and Data.rulesets.modern ~= nil,
   "modern ruleset registered")
 T.eq(Data.rulesets.modern.oneIn256Miss, false, "modern ruleset kills the 1/256 miss")
+T.eq(Data.rulesets.modern.xAccuracyNeverMiss, false,
+  "modern: X ACCURACY no longer skips the accuracy check (no free OHKOs)")
 T.eq(Data.rulesets.gen1_faithful.oneIn256Miss, true, "gen1_faithful is untouched")
+T.eq(Data.rulesets.gen1_faithful.xAccuracyNeverMiss, true, "gen1_faithful keeps the quirk")
 T.eq(Data.constants.defaultRuleset, "modern", "modern is the default ruleset")
 
 run.release()

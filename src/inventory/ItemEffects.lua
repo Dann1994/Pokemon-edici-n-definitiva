@@ -279,6 +279,10 @@ function ItemEffects.use(data, save, itemId, target, battle, moveIndex, ow)
     local function wake(mon)
       if mon and mon.status == "SLP" then
         mon.status = nil
+        -- also clear the sleep counter: the Gen 1 status byte holds it in
+        -- bits 0-2, so wStatus = 0 zeroed it there; here sleepTurns is its
+        -- own field and a stale value could shorten the next sleep.
+        mon.sleepTurns = nil
         woke = true
       end
     end
@@ -312,12 +316,16 @@ function ItemEffects.use(data, save, itemId, target, battle, moveIndex, ow)
         .modifyHappiness(save, "USEDXITEM", b and b.mon)
     end
     local used = itemUseLine(data, save, name)
-    if itemId == "X_ACCURACY" then
+    local neverMiss = not (battle.ruleset
+      and battle.ruleset.xAccuracyNeverMiss == false)
+    if itemId == "X_ACCURACY" and neverMiss then
       -- ItemUseXAccuracy sets USING_X_ACCURACY: moves never miss
       -- (not an accuracy stage); vanilla prints only the used line
       b.xAccuracy = true
       return "consumed", { used }, USE_JINGLE
     end
+    -- modern ruleset: fall through to the X_ITEMS stage bump below, which
+    -- raises stages.accuracy one step like the other X items
     if X_ITEMS[itemId] then
       local stat = X_ITEMS[itemId]
       local cur = b.stages[stat] or 0
@@ -419,6 +427,7 @@ function ItemEffects.use(data, save, itemId, target, battle, moveIndex, ow)
     if itemId == "FULL_RESTORE" and target and target.hp > 0
        and target.hp >= target.stats.hp and target.status then
       target.status = nil
+      target.sleepTurns = nil
       cureActiveToxic(battle, target)
       require("src.core.Sound").play(data, "Heal_Ailment")
       return "consumed", { romText(data, CURE_TEXT.FULL_HEAL,
@@ -443,6 +452,7 @@ function ItemEffects.use(data, save, itemId, target, battle, moveIndex, ow)
                      monName(data, target), target.hp - before) }
     if itemId == "FULL_RESTORE" then
       target.status = nil
+      target.sleepTurns = nil
       cureActiveToxic(battle, target)
     end
     require("src.core.Sound").play(data, "Heal_HP")
@@ -455,6 +465,7 @@ function ItemEffects.use(data, save, itemId, target, battle, moveIndex, ow)
       return "failed", { noEffect(data) }
     end
     target.status = nil
+    target.sleepTurns = nil
     cureActiveToxic(battle, target)
     require("src.core.Sound").play(data, "Heal_Ailment")
     return "consumed", { romText(data, CURE_TEXT[itemId],

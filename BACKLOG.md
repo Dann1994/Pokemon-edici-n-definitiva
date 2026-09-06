@@ -44,28 +44,34 @@ Flags apagados (todos): `oneIn256Miss`, `focusEnergyBug`, `critIgnoresStages`,
 `residualAfterMove`, `badgeBoostReapplyBug`, `zeroDamageMiss`,
 `statusPenaltyIsBaked`.
 
-### 3.2 Bugs de la lista del usuario (mapas / objetos / menús) → revisar vs `tests/parity_*`
+### 3.2 Bugs de la lista del usuario (mapas / objetos / menús)
 
-El motor **ya reproduce a propósito** muchos glitches vía tests de paridad
-nombrados por número de bug. Hay que ver, uno por uno, si está reproducido
-(y con qué flag/opción se desactiva) o si hay que parchearlo en `src/`.
-Referencia de cómo se arreglan en asm: **shinpokered** (jojobear13 / CyanSMP64),
-rama "Lite".
+Revisados los 10. Este motor es una **reimplementación en Lua**, no un
+emulador: los glitches que dependen de corromper la RAM de la Game Boy no
+existen y no hay nada que arreglar.
 
-| Bug reportado | ¿Dónde se toca? | Estado |
+**A — imposibles acá (no hay RAM que corromper):**
+- Glitch del Viejo / MissingNo (surf desde costa de Cinnabar) — dependía del búfer del nombre leído como datos de encuentro
+- Atravesar paredes tras la Zona Safari (500 pasos) — desbordaba el contador de pasos sobre el mapa de colisiones
+- Surf/pesca sobre estatuas de Rhydon — surf consulta `map:isWaterCell` por celda, no coincidencias de tile ID
+
+**B — ya arreglados por construcción:**
+- Softlock de guardería a nivel 1 — `math.max(0, curva(nivel))` en `src/pokemon/Growth.lua`, sin desbordamiento
+- Piedras evolutivas en combate — `ItemEffects.use` rechaza `STONES` si `battle` (línea ~237), el camino de corrupción nunca corre
+- Barra de HP "eterna" en Blissey — normalizada a ~96 frames (`PartyMenu:animateTo`)
+- Repisas / agujeros de Islas Espuma — `parity_ledge_seam_hop`, `parity_seafoam_holes` verdes
+
+**C — quirks de diseño que la reimplementación copiaba (ARREGLADOS en `modern`):**
+
+| Quirk | Flag | Estado |
 |---|---|---|
-| Surfear/pescar sobre estatuas de Rhydon (gimnasios / Alto Mando) — tiles de estatua comparten ID con agua | `src/world/Collision.lua` + `data/generated/tilesets.lua` (behaviour de tile) | PENDIENTE — verificar si `parity_*` ya lo cubre |
-| Surfear desde tierra en costas de Cinnabar / Seafoam (base del "Old Man glitch" / MissingNo) | `src/world/Collision.lua` / `Encounter.lua` | PENDIENTE — hay `parity_cinnabar_east_surf.lua`, `parity_seafoam_holes.lua`, `parity_surf_rod_refusal.lua`: revisar |
-| Salto de repisa hacia el este (Ruta 4) deja atravesar pared | `src/world/` salto de ledge | PENDIENTE — hay `parity_ledge_seam_hop.lua`, `parity_ledge_*`: revisar |
-| Caminar por paredes tras la Zona Safari (guardar, 500 pasos, romper colisión) | contador de pasos Safari + warp | PENDIENTE — hay `parity_static.lua` / safari step tests: revisar |
-| X-Accuracy salta toda comprobación de precisión (incl. OHKO como Fissure/Guillotine) | `src/battle/MoveEffects.lua` / item effect X_ACCURACY | PENDIENTE |
-| Poké Flauta no limpia el contador de turnos de sueño | `src/battle/Status.lua` sueño + item PokeFlute | PENDIENTE |
-| Piedras evolutivas en combate de entrenador corrompen stats temporalmente | item effect de evolution stones en batalla | PENDIENTE |
-| Repelente: contador de pasos se congela / gasta doble al surfear | `src/world/` conteo de pasos tierra vs agua | PENDIENTE |
-| Softlock al sacar de guardería un Pokémon nivel 1 (curva Medium Slow) | `src/pokemon/Growth.lua` / daycare | PENDIENTE — hay `parity_daycare.lua`: revisar |
-| Barra de HP tarda "una eternidad" en mons con mucha vida | `src/ui/` rutina de animación de barra de HP | PENDIENTE — hay `parity_party_hp_bar_palette.lua`, `low_health_alarm`: revisar animación |
+| Fallo 1/256 en moves de 100% | `oneIn256Miss` | ✅ (ya estaba) |
+| Foco Energía ÷4 el crítico | `focusEnergyBug` | ✅ (ya estaba) |
+| **X-Precisión salta la precisión de TODO (incl. OHKO Fisura/Guillotina)** | `xAccuracyNeverMiss=false` | ✅ **HECHO** — en `modern`, X-Precisión sube 1 nivel de precisión (estilo Gen 3) en vez de garantizar el acierto. `src/battle/rulesets/*` + `src/inventory/ItemEffects.lua`. |
+| **Poké Flauta / Despertar / Cura Total limpian `status` pero no el contador `sleepTurns`** | — (siempre) | ✅ **HECHO** — `ItemEffects.lua` ahora limpia `sleepTurns` en los 4 sitios que curan el sueño. |
 
-*(Anotado: el usuario dejará más errores para sumar a esta tabla.)*
+*Repelente al surfear: el código rechaza el Repelente en combate (#894); el
+conteo de pasos tierra/agua no mostró problema. Sin cambios.*
 
 ## 4. Sprites y gráficos
 
