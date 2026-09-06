@@ -1,0 +1,28 @@
+-- Sharing metadata (25-community-and-ecosystem.md 3.2).  Read by tooling
+-- and the manager detail pane; never by the loader's merge.
+return {
+  summary = "Modern phys/spec split, FAIRY/STEEL/DARK types, opt-in bug-free ruleset.",
+  author = "pokered-plus",
+  contact = "https://github.com/bryanthaboi/gen1recomp",
+  tags = { "modernisation", "mechanic", "types", "balance" },
+  differences = {
+    changed = {
+      "every damaging move now carries its Gen 4+ physical/special category; damage uses it instead of the Gen 1 type-based split",
+      "CLEFAIRY, CLEFABLE -> FAIRY; JIGGLYPUFF, WIGGLYTUFF -> NORMAL/FAIRY; MR_MIME -> PSYCHIC/FAIRY; MAGNEMITE, MAGNETON -> ELECTRIC/STEEL",
+    },
+    added = {
+      "FAIRY, STEEL and DARK types with their standard type-chart interactions",
+      "OPTIONS > RULESET > MODERN: turns off the 1/256 miss, the Focus Energy bug, the badge-boost bug, faithful residual timing, and more",
+    },
+    known = {
+      "the modern ruleset is NOT the default -- select it per save",
+      "vanilla Gen 1 chart quirks (Bug<->Poison, Ice->Fire, Ghost<->Psychic) are unchanged; that rewrite is a separate opt-in (BACKLOG 2.5)",
+      "species retypes are the canonical modern typings -- review before shipping",
+    },
+  },
+  credits = {
+    { who = "PokeAPI", for_ = "the Gen 4+ move damage_class reference" },
+    { who = "pret/pokered", for_ = "the base move and species tables this patches over" },
+  },
+  compat = { engine = ">=0.0.0-0 <2.0.0", modApi = 2 },
+}

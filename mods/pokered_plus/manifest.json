@@ -1,0 +1,18 @@
+{
+  "id": "pokered_plus",
+  "name": "Pokered Plus",
+  "version": "0.1.0",
+  "api": 2,
+  "entry": "main.lua",
+  "profile": "overhaul",
+  "game_version": ">=0.0.0-0 <2.0.0",
+  "category": "MECHANIC",
+  "priority": 100,
+  "dependencies": [],
+  "optional_dependencies": [],
+  "conflicts": [],
+  "incompatible": [],
+  "games": ["gen1"],
+  "experimental": false,
+  "description": "QoL + modernisation overhaul: Gen 4+ phys/spec move split, FAIRY/STEEL/DARK types, and an opt-in bug-free 'modern' battle ruleset."
+}
