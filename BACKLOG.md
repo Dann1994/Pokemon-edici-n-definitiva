@@ -72,7 +72,8 @@ rama "Lite".
 |---|---|---|---|---|
 | 4.1 | Sprites de Pokémon de **Amarillo** sobre Red | [datos] overlay | HECHO | `scripts/pokered_plus_yellow_gfx.lua`: copia los 305 PNGs de `battle/front` + `battle/back` de Yellow sobre el cache de Red y corrige `frontSize` de 7 especies (dewgong, doduo, dugtrio, gastly, gengar, haunter, mankey). Re-ejecutar tras re-importar Red. Guarda backup en `battle_red_backup/`; `--revert` restaura. Falta la solución permanente (patch al extractor) para que sea automático. |
 | 4.2 | **Mini sprites** (iconos de menú por especie) para los 151 | [mod] `icons:register` | HECHO | Sacados de `cRz-Shadows/Pokemon_Yellow_Legacy` (`gfx/icons/`), convertidos a 16×32 / 2 frames RGBA **en color** (paleta Gen 2) con `tools/pokered_plus_convert_icons.py`, en `mods/pokered_plus/assets/icons/` (151 PNGs). El mod los registra en `icons.bySpecies` — ganan sobre los ~10 iconos genéricos de Gen 1. `modkit lint` verde (arte nuevo, no ROM-derived). Test verde. |
-| 4.3 | Mejoras de calidad de vida del repo | [opción/mod] | EN CURSO | Ver §5. `textSpeed` ya en FAST (§1.3). |
+| 4.3 | Pokémon del overworld con su mini sprite | [mod] `sprites` + `maps:patch` | HECHO | Las 3 aves legendarias, Mewtwo, los 2 Snorlax y todos los Pokémon "mascota" de las casas (31 objetos) usan un sprite de overworld propio, sacado del mini sprite con `tools/pokered_plus_overworld_mons.py` (16×16, 4 grises). Voltorb/Electrode de la Central siguen disfrazados de Poké Ball. Test verde. |
+| 4.4 | Mejoras de calidad de vida del repo | [opción/mod] | EN CURSO | Ver §5. `textSpeed` ya en FAST (§1.3). |
 
 ## 5. Calidad de vida (lo que ya trae el repo)
 

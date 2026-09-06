@@ -1,14 +1,25 @@
 -- pokered_plus: quality-of-life + modernisation overhaul for Pokemon Red.
 --
--- This first slice does three things, all through the public mod API:
 --   1. the Gen 4+ physical / special / status move split
---   2. the FAIRY, STEEL and DARK types, with their type-chart interactions
---   3. a "modern" battle ruleset that turns off the famous Gen 1 bugs
---      (opt in from OPTIONS > RULESET; not forced)
+--   2. FAIRY / STEEL / DARK types + the full Gen 6 type chart
+--   3. constants.defaultRuleset -> "modern" (the builtin bug-free ruleset)
+--   4. per-species party-menu mini sprites for all 151
+--   5. per-species overworld art for the birds, Mewtwo, Snorlax and the
+--      decorative pet Pokemon
 --
--- Everything else on the roadmap (modern type chart, Yellow colours, map
--- and menu bug fixes, new events, Mew capture, Prof. Oak battle) lives in
--- ../../BACKLOG.md.
+-- Roadmap / decisions: ../../BACKLOG.md.
+
+local function shallowCopy(t)
+  local o = {}
+  for k, v in pairs(t) do o[k] = v end
+  return o
+end
+
+local function shallowCopyList(t)
+  local o = {}
+  for i = 1, #t do o[i] = t[i] end
+  return o
+end
 
 local function readTable(mod, rel)
   local source = mod:read(rel)
@@ -95,19 +106,74 @@ return function(mod)
 
   -- ------------------------------------------------------- 4. mini sprites
   -- Per-species party-menu icons, from Pokemon Yellow Legacy, converted to
-  -- the engine's 16x32 two-frame DMG-grey format by
+  -- the engine's 16x32 two-frame format by
   -- tools/pokered_plus_convert_icons.py.  icons.bySpecies wins over the
   -- vanilla ~10 shared dex icons (src/ui/PartyMenu.lua:drawIcon).
   local iconList = readTable(mod, "data/icons_list.lua")
-  local icons = 0
+  local speciesSet = {}
   for _, species in ipairs(iconList or {}) do
+    speciesSet[species] = true
     if mod.content.pokemon:get(species) then
       mod.content.icons:register(species, {
         image = mod.path .. "/assets/icons/" .. species:lower() .. ".png",
         frames = 2,
       })
-      icons = icons + 1
     end
   end
-  mod.log:info("mini sprites: %d species", icons)
+  mod.log:info("mini sprites: %d species", #(iconList or {}))
+
+  -- ---------------------------------------------- 5. overworld Pokemon art
+  -- The legendary birds, Mewtwo, Snorlax and the decorative pet Pokemon in
+  -- houses all share a few generic overworld sprites (SPRITE_MONSTER /
+  -- SPRITE_BIRD / ...).  Point each object at a per-species sprite built
+  -- from its mini sprite (tools/pokered_plus_overworld_mons.py).  The
+  -- Power Plant Voltorb / Electrode keep SPRITE_POKE_BALL -- they are
+  -- meant to look like items until you touch them.
+  local GENERIC = {
+    SPRITE_MONSTER = true, SPRITE_BIRD = true, SPRITE_SNORLAX = true,
+    SPRITE_SEEL = true, SPRITE_FAIRY = true,
+  }
+  local RENAME = {
+    NIDORANF = "NIDORAN_F", NIDORANM = "NIDORAN_M", MRMIME = "MR_MIME",
+  }
+  local function speciesOf(obj)
+    if obj.pokemon and speciesSet[obj.pokemon] then return obj.pokemon end
+    local tail = tostring(obj.name or ""):match("_([A-Z0-9]+)$")
+    if not tail then return nil end
+    tail = RENAME[tail] or tail
+    return speciesSet[tail] and tail or nil
+  end
+
+  local registered, swapped, patches = {}, 0, {}
+  for mapId, map in mod.content.maps:each() do
+    local objects = map.objects
+    if type(objects) == "table" then
+      local copy
+      for i, obj in ipairs(objects) do
+        if type(obj) == "table" and GENERIC[obj.sprite] then
+          local sp = speciesOf(obj)
+          if sp then
+            local spriteId = "SPRITE_MON_" .. sp
+            if not registered[sp] then
+              mod.content.sprites:register(spriteId, {
+                image = mod.path .. "/assets/ow/" .. sp:lower() .. ".png",
+                frames = 1,
+                walker = false,
+              })
+              registered[sp] = true
+            end
+            copy = copy or shallowCopyList(objects)
+            copy[i] = shallowCopy(obj)
+            copy[i].sprite = spriteId
+            swapped = swapped + 1
+          end
+        end
+      end
+      if copy then patches[mapId] = copy end
+    end
+  end
+  for mapId, objects in pairs(patches) do
+    mod.content.maps:patch(mapId, { objects = objects })
+  end
+  mod.log:info("overworld Pokemon: %d objects repointed", swapped)
 end

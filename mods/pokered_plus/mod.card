@@ -15,6 +15,7 @@ return {
     added = {
       "FAIRY, STEEL and DARK types",
       "per-species animated party-menu mini sprites for all 151 Kanto Pokemon",
+      "per-species overworld art for the legendary birds, Mewtwo, Snorlax and the pet Pokemon in houses",
     },
     known = {
       "species retypes are the canonical Gen 6 typings",

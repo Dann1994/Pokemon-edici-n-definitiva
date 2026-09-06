@@ -3,6 +3,17 @@
 Format: [keep a changelog](https://keepachangelog.com/en/1.1.0/).
 Version headings match `manifest.json`'s `version`.
 
+## 0.4.0
+
+### Added
+
+- **Overworld Pokemon art**: the 3 legendary birds, Mewtwo, both Snorlax
+  and every decorative pet Pokemon in a house (31 map objects) now show a
+  per-species overworld sprite derived from its mini sprite
+  (`tools/pokered_plus_overworld_mons.py`, 16x16 4-grey) instead of the
+  shared SPRITE_MONSTER / SPRITE_BIRD. Power Plant Voltorb/Electrode keep
+  SPRITE_POKE_BALL (the item disguise).
+
 ## 0.3.0
 
 ### Added

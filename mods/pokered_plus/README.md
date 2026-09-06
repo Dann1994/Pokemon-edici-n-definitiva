@@ -4,7 +4,7 @@ Quality-of-life and modernisation overhaul for the gen1recomp port of
 Pokemon Red. The working mod for the `pokered-plus` fork; full roadmap in
 `../../BACKLOG.md`.
 
-## What it does (0.3.0)
+## What it does (0.4.0)
 
 1. **Physical / special / status split.** Every damaging move is tagged
    with its Gen 4+ category. The engine already prefers `move.category`
@@ -20,6 +20,11 @@ Pokemon Red. The working mod for the `pokered-plus` fork; full roadmap in
 4. **Mini sprites.** Per-species animated party-menu icons for all 151
    Kanto Pokemon (`assets/icons/`, from Pokemon Yellow Legacy via
    `tools/pokered_plus_convert_icons.py`).
+5. **Overworld Pokemon art.** The legendary birds, Mewtwo, Snorlax and the
+   decorative pet Pokemon in houses each get their own overworld sprite
+   (`assets/ow/`, derived from the mini sprites by
+   `tools/pokered_plus_overworld_mons.py`). Voltorb/Electrode in the Power
+   Plant stay disguised as items.
 
 Sibling changes that are **not** in this mod:
 

@@ -64,6 +64,28 @@ do
   T.eq(n, 151, "all 151 species get a mini sprite")
 end
 
+-- 4b. overworld Pokemon art
+T.check(Data.sprites.SPRITE_MON_MEWTWO ~= nil, "Mewtwo has an overworld sprite")
+T.check(Data.sprites.SPRITE_MON_ARTICUNO ~= nil, "Articuno has an overworld sprite")
+T.check(Data.sprites.SPRITE_MON_SNORLAX ~= nil, "Snorlax has an overworld sprite")
+do
+  local mewtwo
+  for _, o in ipairs(Data.maps.CERULEAN_CAVE_B1F.objects) do
+    if o.pokemon == "MEWTWO" then mewtwo = o end
+  end
+  T.check(mewtwo ~= nil, "the Mewtwo object is still there")
+  T.eq(mewtwo.sprite, "SPRITE_MON_MEWTWO", "the Mewtwo object points at its sprite")
+  T.eq(mewtwo.text, "TEXT_CERULEANCAVEB1F_MEWTWO", "and keeps its other fields")
+end
+do
+  -- the Power Plant Voltorb/Electrode keep the poke-ball disguise
+  local disguised = 0
+  for _, o in ipairs(Data.maps.POWER_PLANT.objects) do
+    if o.sprite == "SPRITE_POKE_BALL" then disguised = disguised + 1 end
+  end
+  T.check(disguised >= 8, "Power Plant Voltorb/Electrode still look like items")
+end
+
 -- 5. modern ruleset
 T.check(Data.rulesets ~= nil and Data.rulesets.modern ~= nil,
   "modern ruleset registered")
