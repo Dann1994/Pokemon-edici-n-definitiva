@@ -3,6 +3,16 @@
 Format: [keep a changelog](https://keepachangelog.com/en/1.1.0/).
 Version headings match `manifest.json`'s `version`.
 
+## 0.3.0
+
+### Added
+
+- **Mini sprites**: per-species animated party-menu icons for all 151
+  Kanto Pokemon, from Pokemon Yellow Legacy
+  (`cRz-Shadows/Pokemon_Yellow_Legacy`), converted to the engine's
+  16x32 two-frame DMG-grey format by `tools/pokered_plus_convert_icons.py`
+  and registered into `icons.bySpecies`.
+
 ## 0.2.0
 
 ### Changed

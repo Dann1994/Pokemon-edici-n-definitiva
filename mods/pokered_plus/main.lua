@@ -92,4 +92,22 @@ return function(mod)
   -- default for new saves.  Keep the engine fallback in step for any
   -- context that reads a nil options.ruleset.
   mod.content.constants:patch("defaultRuleset", "modern")
+
+  -- ------------------------------------------------------- 4. mini sprites
+  -- Per-species party-menu icons, from Pokemon Yellow Legacy, converted to
+  -- the engine's 16x32 two-frame DMG-grey format by
+  -- tools/pokered_plus_convert_icons.py.  icons.bySpecies wins over the
+  -- vanilla ~10 shared dex icons (src/ui/PartyMenu.lua:drawIcon).
+  local iconList = readTable(mod, "data/icons_list.lua")
+  local icons = 0
+  for _, species in ipairs(iconList or {}) do
+    if mod.content.pokemon:get(species) then
+      mod.content.icons:register(species, {
+        image = mod.path .. "/assets/icons/" .. species:lower() .. ".png",
+        frames = 2,
+      })
+      icons = icons + 1
+    end
+  end
+  mod.log:info("mini sprites: %d species", icons)
 end

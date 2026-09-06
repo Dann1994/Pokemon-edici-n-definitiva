@@ -71,7 +71,7 @@ rama "Lite".
 | # | Cambio | Vía | Estado | Notas |
 |---|---|---|---|---|
 | 4.1 | Sprites de Pokémon de **Amarillo** sobre Red | [datos] overlay | HECHO | `scripts/pokered_plus_yellow_gfx.lua`: copia los 305 PNGs de `battle/front` + `battle/back` de Yellow sobre el cache de Red y corrige `frontSize` de 7 especies (dewgong, doduo, dugtrio, gastly, gengar, haunter, mankey). Re-ejecutar tras re-importar Red. Guarda backup en `battle_red_backup/`; `--revert` restaura. Falta la solución permanente (patch al extractor) para que sea automático. |
-| 4.2 | **Mini sprites** (iconos de menú estilo Gen 2) para los 151 | [datos/mod] desde `cRz-Shadows/Pokemon_Yellow_Legacy` | FUTURO | Gen 1 tiene sólo ~10 iconos genéricos (`data/generated/icons.lua`). Sacar los 151 mini-sprites de Yellow Legacy y meterlos como set nuevo. |
+| 4.2 | **Mini sprites** (iconos de menú por especie) para los 151 | [mod] `icons:register` | HECHO | Sacados de `cRz-Shadows/Pokemon_Yellow_Legacy` (`gfx/icons/`), convertidos a 16×32 / 2 frames / 4 grises DMG con `tools/pokered_plus_convert_icons.py`, en `mods/pokered_plus/assets/icons/` (151 PNGs). El mod los registra en `icons.bySpecies` — ganan sobre los ~10 iconos genéricos de Gen 1. `modkit lint` verde (arte nuevo, no ROM-derived). Test verde. |
 | 4.3 | Mejoras de calidad de vida del repo | [opción/mod] | EN CURSO | Ver §5. `textSpeed` ya en FAST (§1.3). |
 
 ## 5. Calidad de vida (lo que ya trae el repo)
@@ -141,4 +141,4 @@ Catálogo — decidir cuáles activar por defecto:
 2. **§7.2** — documento del evento de captura de Mew.
 3. **§7.3** — detalles de la batalla contra Oak.
 4. **§7.1** — qué eventos nuevos.
-5. **§4.2** — mini sprites (Yellow Legacy) — marcado FUTURO.
+5. *(§4.2 mini sprites — HECHO)*

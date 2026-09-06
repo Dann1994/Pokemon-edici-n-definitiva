@@ -14,6 +14,7 @@ return {
     },
     added = {
       "FAIRY, STEEL and DARK types",
+      "per-species animated party-menu mini sprites for all 151 Kanto Pokemon",
     },
     known = {
       "species retypes are the canonical Gen 6 typings",
@@ -23,6 +24,7 @@ return {
   credits = {
     { who = "PokeAPI", for_ = "the Gen 4+ move damage_class reference" },
     { who = "pret/pokered", for_ = "the base move and species tables this patches over" },
+    { who = "cRz-Shadows / Pokemon Yellow Legacy", for_ = "the per-species party icon art" },
   },
   compat = { engine = ">=0.0.0-0 <2.0.0", modApi = 2 },
 }

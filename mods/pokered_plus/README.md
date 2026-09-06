@@ -4,7 +4,7 @@ Quality-of-life and modernisation overhaul for the gen1recomp port of
 Pokemon Red. The working mod for the `pokered-plus` fork; full roadmap in
 `../../BACKLOG.md`.
 
-## What it does (0.2.0)
+## What it does (0.3.0)
 
 1. **Physical / special / status split.** Every damaging move is tagged
    with its Gen 4+ category. The engine already prefers `move.category`
@@ -17,6 +17,9 @@ Pokemon Red. The working mod for the `pokered-plus` fork; full roadmap in
    (`src/battle/rulesets/modern.lua`) is a builtin and the SaveData
    default; this mod keeps `constants.defaultRuleset` in step. Pick
    FAITHFUL from OPTIONS > RULESET for the original bugs.
+4. **Mini sprites.** Per-species animated party-menu icons for all 151
+   Kanto Pokemon (`assets/icons/`, from Pokemon Yellow Legacy via
+   `tools/pokered_plus_convert_icons.py`).
 
 Sibling changes that are **not** in this mod:
 
@@ -36,7 +39,6 @@ luajit mods/pokered_plus/tests/pokered_plus_test.lua
 ## Not done yet (see BACKLOG.md)
 
 - Yellow colour system on Red (PaletteFX source patch)
-- Mini sprites (Yellow Legacy)
 - Map / item / menu bug fixes
 - New events, Mew capture, Prof. Oak battle
 - LAN play verification

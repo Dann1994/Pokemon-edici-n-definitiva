@@ -53,7 +53,18 @@ T.eq(Data.pokemon.MAGNEMITE.types[2], "STEEL", "MAGNEMITE is ELECTRIC/STEEL")
 T.eq(Data.pokemon.JIGGLYPUFF.types[2], "FAIRY", "JIGGLYPUFF is NORMAL/FAIRY")
 T.check(#Data.pokemon.CLEFAIRY.learnset > 0, "CLEFAIRY keeps its learnset")
 
--- 4. modern ruleset
+-- 4. mini sprites
+T.check(type(Data.icons.bySpecies) == "table", "icons.bySpecies exists")
+T.check(type(Data.icons.bySpecies.PIKACHU) == "table"
+  and Data.icons.bySpecies.PIKACHU.frames == 2, "PIKACHU has a per-species icon")
+T.check(Data.icons.bySpecies.MEWTWO ~= nil, "MEWTWO has a per-species icon")
+do
+  local n = 0
+  for _ in pairs(Data.icons.bySpecies) do n = n + 1 end
+  T.eq(n, 151, "all 151 species get a mini sprite")
+end
+
+-- 5. modern ruleset
 T.check(Data.rulesets ~= nil and Data.rulesets.modern ~= nil,
   "modern ruleset registered")
 T.eq(Data.rulesets.modern.oneIn256Miss, false, "modern ruleset kills the 1/256 miss")
