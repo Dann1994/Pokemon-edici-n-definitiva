@@ -92,3 +92,6 @@ mobile/ios/bundle_id.local
 /mods/*/baseroms/
 /imports/baseroms/
 /imports/baseroms-recovery/
+
+# Translation worksheets: ROM English text, never committed
+mods/*-worksheet/

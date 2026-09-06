@@ -104,6 +104,16 @@ Catálogo — decidir cuáles activar por defecto:
 | 7.2 | **Captura de Mew** | [mod] | NECESITA-DECISIÓN | El usuario pasará un documento con el diseño. `example_mew_starter` ya muestra cómo inyectar Mew en el guion de Oak's Lab. |
 | 7.3 | **Batalla contra el Profesor Oak** | [mod/fuente] | PENDIENTE | El equipo de Oak existe en los datos del juego original pero nunca se usa. Se puede añadir como trainer + script de evento. Referencia: es un contenido "cortado" bien documentado. |
 
+## 7bis. Idiomas
+
+| # | Cambio | Vía | Estado | Notas |
+|---|---|---|---|---|
+| 7b.1 | Selección de idioma | [mod] `LANGUAGE` | HECHO | El motor ya trae el sistema: cada traducción es un mod `category:LANGUAGE` + `language:true`. Se elige en el GESTOR DE MODS (F10) / pestaña MODS. Funciona en online. |
+| 7b.2 | **Español (España)** — `mods/es_ES` | [mod] `modkit translation` | PARCIAL | `--pixel-font` (tildes/ñ/¿¡ sin hoja de glifos). Traducido: 165 movimientos, 15 tipos, ~70 objetos, clases de entrenador, HUD de estado, ~115 cadenas de interfaz/combate. **Sin traducir: el guion narrativo** (`dialogue.lua`, 2592 líneas) — cae al inglés; el inglés de referencia está en `es_ES-worksheet/` (no se sube). No reproduje el guion oficial de Nintendo; se rellena a mano o con MT. Nombres = glosario de referencia (PokéAPI/WikiDex). Test 18/18. |
+| 7b.3 | **Español latino** — `mods/es_419` | [mod] delta sobre es_ES | HECHO (nombres) | Depende de `es_ES` y cambia los 165 movimientos + tipos (Insecto/Pelea) + Poké Balls (Pokébola…) a la traducción latina de **Leyendas Pokémon: Z-A**. Fuente: PokéAPI locale `es` (= la traducción de Z-A) contrastado con Pokéxperto. |
+| 7b.4 | Guion narrativo en español | — | PENDIENTE | ~4500 líneas (2592 de `dialogue.lua` + narrativa de `strings.lua`). No reproduzco la localización oficial. Opciones: traducción propia incremental, pasada de traducción automática como borrador, o dejarlo en inglés. |
+| 7b.5 | Rejilla de nombres con Ñ | [mod] hook `ui.naming.grid` | FUTURO | `es_ES/lang/naming.lua` puede añadir la Ñ a la pantalla de poner mote. |
+
 ## 8. Ya aplicado en el fork (infra)
 
 - `git`: fork completo (1541 commits), remoto `upstream`, rama `pokered-plus`. Ver `FORK.md`.
