@@ -19,6 +19,12 @@ T.eq(Data.trainers.OPP_BUG_CATCHER.name, "CAZABICHOS", "es_ES: bug catcher class
 local TC = require("src.battle.TypeChart"); TC.load(Data)
 T.eq(TC.displayName("BUG", Data), "BICHO", "es_ES: BUG type -> BICHO")
 T.eq(TC.displayName("FIGHTING", Data), "LUCHA", "es_ES: FIGHTING -> LUCHA")
+-- place names: TownMap:bannerText renders loc.name through Strings(),
+-- which folds the strings registry
+T.eq(Data.strings["PALLET TOWN"], "PUEBLO PALETA", "es_ES: place name PALLET TOWN")
+T.eq(Data.strings["CERULEAN CITY"], "CIUDAD CELESTE", "es_ES: place name CERULEAN CITY")
+T.eq(Data.strings["ROUTE 5"], "RUTA 5", "es_ES: ROUTE 5 -> RUTA 5")
+T.eq(Data.strings["ATTACK"], "ATAQUE", "es_ES: UI string still there")
 run.release()
 
 -- ---- es_419 catalogs carry the Legends Z-A move / type names -----------
