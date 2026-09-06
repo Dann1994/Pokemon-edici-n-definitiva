@@ -4,7 +4,7 @@ Quality-of-life and modernisation overhaul for the gen1recomp port of
 Pokemon Red. The working mod for the `pokered-plus` fork; full roadmap in
 `../../BACKLOG.md`.
 
-## What it does (0.4.0)
+## What it does (0.5.0)
 
 1. **Physical / special / status split.** Every damaging move is tagged
    with its Gen 4+ category. The engine already prefers `move.category`
@@ -25,6 +25,8 @@ Pokemon Red. The working mod for the `pokered-plus` fork; full roadmap in
    (`assets/ow/`, derived from the mini sprites by
    `tools/pokered_plus_overworld_mons.py`). Voltorb/Electrode in the Power
    Plant stay disguised as items.
+6. **Title ribbon.** The version line reads "EDICIÓN DEFINITIVA"
+   (`assets/title/`, via `field.boot.title.versionRibbon`).
 
 Sibling changes that are **not** in this mod:
 

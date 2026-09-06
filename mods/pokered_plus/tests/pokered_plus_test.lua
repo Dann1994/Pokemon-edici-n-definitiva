@@ -86,6 +86,14 @@ do
   T.check(disguised >= 8, "Power Plant Voltorb/Electrode still look like items")
 end
 
+-- 4c. title ribbon
+do
+  local bt = Data.field and Data.field.boot and Data.field.boot.title
+  T.check(bt ~= nil and type(bt.versionRibbon) == "string"
+    and bt.versionRibbon:match("edicion_definitiva%.png$"),
+    "title ribbon points at EDICIÓN DEFINITIVA art")
+end
+
 -- 5. modern ruleset
 T.check(Data.rulesets ~= nil and Data.rulesets.modern ~= nil,
   "modern ruleset registered")

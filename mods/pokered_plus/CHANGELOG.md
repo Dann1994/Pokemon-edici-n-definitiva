@@ -3,6 +3,14 @@
 Format: [keep a changelog](https://keepachangelog.com/en/1.1.0/).
 Version headings match `manifest.json`'s `version`.
 
+## 0.5.0
+
+### Added
+
+- **Title-screen ribbon**: the "Red Version" text now reads "EDICIÓN
+  DEFINITIVA" (`tools/pokered_plus_title_ribbon.py` -> `assets/title/`,
+  wired through `field.boot.title.versionRibbon`).
+
 ## 0.4.0
 
 ### Added

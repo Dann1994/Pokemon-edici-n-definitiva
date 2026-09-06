@@ -176,4 +176,16 @@ return function(mod)
     mod.content.maps:patch(mapId, { objects = objects })
   end
   mod.log:info("overworld Pokemon: %d objects repointed", swapped)
+
+  -- ----------------------------------------------- 6. title-screen ribbon
+  -- Replace the "Red Version" ribbon with "EDICIÓN DEFINITIVA".
+  -- src/ui/TitleState.lua merges field.boot.title over the extracted
+  -- field.title; versionRibbon is drawn whole (centred, y=64) and coloured
+  -- by the title's LOGO1 palette.  Art: tools/pokered_plus_title_ribbon.py.
+  mod.content.field:patch("boot", {
+    title = {
+      versionRibbon = mod.path .. "/assets/title/edicion_definitiva.png",
+    },
+  })
+  mod.log:info("title ribbon: EDICIÓN DEFINITIVA")
 end
