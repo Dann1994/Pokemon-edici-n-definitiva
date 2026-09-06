@@ -15,7 +15,7 @@ Convención de vías: **[opción]** = ya existe como ajuste · **[mod]** = vía 
 | # | Cambio | Vía | Estado | Notas |
 |---|---|---|---|---|
 | 1.1 | Pantalla panorámica (batalla widescreen 304×144) | [opción] `battleLayout="wide"` | NECESITA-DECISIÓN | Ya existe y funciona: OPTIONS → BATTLE LAYOUT → WIDE. **Probé ponerlo por defecto en `SaveData.lua` y rompe `tests/parity_J`**: el layout wide cambia la navegación del menú de ataques (grid en vez de lista, `BattleState:moveGridNavigation`). Hay que decidir si asumimos ese cambio de comportamiento como "el juego de pokered-plus" o lo dejamos como opción. Revertido por ahora. |
-| 1.2 | Sistema de colores de Pokémon Amarillo | [fuente/datos] | NECESITA-DECISIÓN | El motor trae `data/palettes_yellow.lua` + `palettes_gbc_yellow.lua` y `PaletteFX.yellowPack()`, pero el modo "OG YELLOW" (`ogred`) sólo se activa en una partida de **Yellow** (`GameVersion.isYellow()`). En Red hay que forzar el pack amarillo en `PaletteFX` — es un parche de fuente, no un switch. Ver §7.1. |
+| 1.2 | Sistema de colores de Pokémon Amarillo | [fuente/datos] | NECESITA-DECISIÓN | El motor trae `data/palettes_yellow.lua` + `palettes_gbc_yellow.lua` y `PaletteFX.yellowPack()`, pero el modo "OG YELLOW" (`ogred`) sólo se activa en una partida de **Yellow** (`GameVersion.isYellow()`). En Red hay que forzar el pack amarillo en `PaletteFX` — parche de fuente. Alternativa simple: **jugar directamente la versión Yellow** (ya importada, seleccionable en el launcher) que trae colores + sprites + Pikachu que te sigue de fábrica. |
 | 1.3 | Modos de color disponibles hoy | [opción] `colors` | INFO | `ogred / gbc / redpp / og / og_inv / gbc_inv / classic` (`PaletteFX.MODES`). `gbc` (Advanced GBC) es el default actual. |
 
 ## 2. Tipos y tabla de tipos
@@ -78,7 +78,7 @@ rama "Lite".
 
 | # | Cambio | Vía | Estado | Notas |
 |---|---|---|---|---|
-| 4.1 | Reemplazar sprites de Pokémon por los de **Amarillo** | [datos] extractor | NECESITA-DECISIÓN | La ROM de Yellow ya está (`C:\...\Roms\Gb`). Yellow tiene su propio ROM de front sprites (retoques en varios). Opciones: (a) importar Yellow y que el extractor de Red use su banco de sprites; (b) mod GRAPHICS que sobrescriba `assets/generated/sprites/*`. Hay `assets/generated/sprites/back/` y `/front/`. |
+| 4.1 | Reemplazar sprites de Pokémon por los de **Amarillo** | [datos] extractor | NECESITA-DECISIÓN | **Yellow ya importado** (SHA-1 `cc7d0326…` verificado; cache en `%APPDATA%\LOVE\pokemon-love2d\yellow\`, 633 archivos). Opciones: (a) mod GRAPHICS que apunte los `spriteFront/spriteBack` de cada especie al PNG del cache de Yellow; (b) parche en el extractor para que Red lea el banco de sprites de Yellow. Pendiente elegir. |
 | 4.2 | **Mini sprites** (iconos de menú estilo Gen 2) para los 151 | [datos/mod] desde `cRz-Shadows/Pokemon_Yellow_Legacy` | FUTURO | Anotado como mejora futura. Gen 1 tiene sólo ~10 iconos genéricos (`data/generated/icons.lua`). Sacar los 151 mini-sprites de Yellow Legacy y meterlos como set nuevo. |
 | 4.3 | Mejoras de calidad de vida del repo | [opción/mod] | EN CURSO | Ver §5. |
 
