@@ -10,8 +10,9 @@ Version headings match `manifest.json`'s `version`.
 - **Mini sprites**: per-species animated party-menu icons for all 151
   Kanto Pokemon, from Pokemon Yellow Legacy
   (`cRz-Shadows/Pokemon_Yellow_Legacy`), converted to the engine's
-  16x32 two-frame DMG-grey format by `tools/pokered_plus_convert_icons.py`
-  and registered into `icons.bySpecies`.
+  16x32 two-frame RGBA format by `tools/pokered_plus_convert_icons.py`
+  (keeping the Gen 2 per-icon colour; index 0 forced to opaque white) and
+  registered into `icons.bySpecies`.
 
 ## 0.2.0
 

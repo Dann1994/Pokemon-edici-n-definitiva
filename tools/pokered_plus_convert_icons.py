@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Convert Pokemon Yellow Legacy party-menu icons into the format
-mods/pokered_plus expects: 16x32 RGBA, two stacked 16x16 frames, the four
-DMG greys keyed by palette index.
+mods/pokered_plus expects: 16x32 RGBA, two stacked 16x16 frames.
+
+The source icons are indexed PNGs whose 4-colour palette already carries
+the Gen 2 icon tint (green plant mons, red fire mons, purple poison, ...).
+This keeps that colour and only forces palette index 0 (the background) to
+opaque white, matching the engine's built-in icon convention.
 
     python3 tools/pokered_plus_convert_icons.py <path-to/Pokemon_Yellow_Legacy/gfx/icons>
 
@@ -15,8 +19,7 @@ import sys
 
 from PIL import Image
 
-# palette index -> DMG grey, matching mods/examples/example_mini_conversion
-SHADES = [(248, 248, 248), (168, 168, 168), (104, 104, 104), (8, 8, 8)]
+BACKGROUND = (255, 255, 255, 255)  # palette index 0
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(REPO, "mods", "pokered_plus", "assets", "icons")
@@ -39,13 +42,17 @@ def convert(src_png):
         raise ValueError(f"{src_png}: expected 16x32, got {im.size}")
     if im.mode != "P":
         im = im.convert("P")
+    pal = im.getpalette()  # flat [r,g,b, r,g,b, ...]
     idx = im.load()
     out = Image.new("RGBA", (16, 32))
     op = out.load()
     for y in range(32):
         for x in range(16):
-            shade = SHADES[min(idx[x, y], 3)]
-            op[x, y] = (*shade, 255)
+            i = idx[x, y]
+            if i == 0:
+                op[x, y] = BACKGROUND
+            else:
+                op[x, y] = (pal[i * 3], pal[i * 3 + 1], pal[i * 3 + 2], 255)
     return out
 
 
