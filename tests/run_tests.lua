@@ -2822,7 +2822,8 @@ do
   end
   eq(og.save.options.textSpeed, 1,
      "new saves default to FAST text (pokered-plus)")
-  eq(og.save.options.colors, "gbc", "new saves default COLORS to GBC")
+  eq(og.save.options.colors, "yellow",
+     "new saves default COLORS to YELLOW (pokered-plus)")
   eq(og.save.options.tilt, 0, "new saves default TILT to OFF")
   eq(og.save.options.zoom, 0, "new saves default ZOOM to FIT")
   eq(og.save.options.voidFill, "trees", "new saves default VOID FILL to TREES")

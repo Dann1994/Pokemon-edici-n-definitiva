@@ -828,6 +828,10 @@ end
 -- CLASSIC pea-green title, #870).
 do
   local PaletteFX = require("src.render.PaletteFX")
+  -- pokered-plus defaults COLORS to "yellow"; this block controls palette
+  -- resolution with fake tables, which needs the SGB (pass-through) mode.
+  local _prevMode = PaletteFX.mode
+  PaletteFX.setMode("gbc")
   local logo2 = {
     { 255, 255, 255 }, { 230, 197, 0 }, { 148, 156, 148 }, { 41, 99, 181 },
   }
@@ -879,6 +883,7 @@ do
   check(opened and opened.titleUiBox
         and opened.titleUiBox[1] == 0 and opened.titleUiBox[3] == 12,
         "openMenu stamps titleUiBox on the pushed Menu")
+  PaletteFX.setMode(_prevMode)
 end
 
 -- Options / mod manager opened from the title must not inherit LOGO1
@@ -887,6 +892,8 @@ do
   local OptionsMenu = require("src.ui.OptionsMenu")
   local ManagerState = require("src.mods.ManagerState")
   local PaletteFX = require("src.render.PaletteFX")
+  local _prevMode = PaletteFX.mode
+  PaletteFX.setMode("gbc")  -- pokered-plus: resolve fake palettes via SGB
   local mewmon = {
     { 255, 255, 255 }, { 239, 156, 107 }, { 115, 33, 165 }, { 0, 0, 0 },
   }
@@ -908,6 +915,7 @@ do
   check(titleZones and titleZones[2].colors[1][2] == 255,
         "title LOGO1 sanitize still pure-white with pink ROM input")
   check(PaletteFX.wholeNamed, "PaletteFX.wholeNamed still available for menus")
+  PaletteFX.setMode(_prevMode)
 end
 
 local OakSpeech = require("src.ui.OakSpeech")

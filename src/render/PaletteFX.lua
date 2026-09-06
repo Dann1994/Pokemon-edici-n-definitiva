@@ -26,7 +26,10 @@ local gbcYellowPack -- Yellow Advanced deltas; false = missing; nil = not loaded
 -- Cycle order matches OptionsMenu / hotkey 2.  The three real colorizations
 -- come first (OG RED/BLUE/YELLOW = GBC hardware, SGB = per-map Super Game Boy,
 -- ADVANCED = pokered-gbc per-tile), then the DMG-shade novelty modes.
-PaletteFX.MODES = { "ogred", "gbc", "redpp", "og", "og_inv", "gbc_inv", "classic" }
+-- pokered-plus: "yellow" paints any game with pokeyellow's CGBBasePalettes
+-- (data/palettes_yellow.lua), i.e. Red/Blue rendered in Pokemon Yellow's
+-- authentic Game Boy Color colours.  Escape hatch: branch `stock-defaults`.
+PaletteFX.MODES = { "ogred", "gbc", "redpp", "yellow", "og", "og_inv", "gbc_inv", "classic" }
 -- `gbc`/`gbc_inv`/`redpp` keep their save-value ids for back-compat while
 -- their LABELS say what the mode actually is: "SGB"/"SGB INV" because the old
 -- "GBC" label was a misnomer (it never was the real Game Boy Color palette),
@@ -35,8 +38,8 @@ PaletteFX.MODES = { "ogred", "gbc", "redpp", "og", "og_inv", "gbc_inv", "classic
 -- Blue playthrough.  Comments elsewhere still call it RED++, the name it has
 -- carried in this file since it landed.
 PaletteFX.MODE_LABELS = {
-  ogred = "OG RED", gbc = "SGB", redpp = "ADVANCED", og = "OG",
-  og_inv = "OG INV", gbc_inv = "SGB INV", classic = "CLASSIC",
+  ogred = "OG RED", gbc = "SGB", redpp = "ADVANCED", yellow = "YELLOW",
+  og = "OG", og_inv = "OG INV", gbc_inv = "SGB INV", classic = "CLASSIC",
 }
 PaletteFX.mode = "gbc"
 
@@ -126,7 +129,7 @@ PaletteFX.GBC_OBJ_BLUE = {
 -- CGBBase PAL_ROUTE there, never Blue's GBC_BG_BLUE.
 function PaletteFX.ogBg()
   if GameVersion.isBlue() then return PaletteFX.GBC_BG_BLUE end
-  if GameVersion.isYellow() then
+  if PaletteFX.yellowColors() then
     local y = PaletteFX.yellowPack()
     local route = y and y.cgbBase and y.cgbBase.ROUTE
     if route then return route end
@@ -351,7 +354,15 @@ end
 -- playthrough and labels itself "OG YELLOW".
 function PaletteFX.usesYellowCgb(mode)
   mode = mode or PaletteFX.mode
-  return GameVersion.isYellow() and mode == "ogred"
+  return (GameVersion.isYellow() and mode == "ogred") or mode == "yellow"
+end
+
+-- pokered-plus: true when the CGBBasePalettes / yellowPack path should
+-- drive the picture -- a real Yellow playthrough, or any game in the
+-- "yellow" COLORS mode.  Gates palette-data selection only (not Yellow's
+-- own content branches).
+function PaletteFX.yellowColors()
+  return GameVersion.isYellow() or PaletteFX.mode == "yellow"
 end
 
 -- Whether the active mode bakes a per-OBJ palette onto overworld sprites
@@ -437,7 +448,7 @@ end
 -- Active named-palette table for COLORS: RED++ uses data/palettes_gbc.lua,
 -- Yellow uses data/palettes_yellow.lua, everything else uses the ROM-imported data.palettes.
 function PaletteFX.pack(data)
-  if GameVersion.isYellow() then
+  if PaletteFX.yellowColors() then
     local y = PaletteFX.yellowPack()
     if y then return y end
   elseif PaletteFX.usesGbcPack() then
@@ -490,7 +501,7 @@ function PaletteFX.pal(data, name)
     local fromRom = romNamedPal(data, name)
     if fromRom then return fromRom end
   end
-  if GameVersion.isYellow() then
+  if PaletteFX.yellowColors() then
     -- OG YELLOW and Advanced both use CGBBase for named pals: SuperPalettes
     -- wash out yellows (title MEWMON/LOGO, YELLOWMON) to pale cream.  World
     -- tile bake still comes from the Advanced GBC pack via worldPack (#1639).
@@ -553,7 +564,7 @@ function PaletteFX.monPal(data, species, transformed)
   end
   local name = p.pokemon[species] or "MEWMON"
   if PaletteFX.usesYellowCgb()
-     or (GameVersion.isYellow() and PaletteFX.usesGbcPack()) then
+     or (PaletteFX.yellowColors() and PaletteFX.usesGbcPack()) then
     local yc = PaletteFX.pal(data, name)
     if yc then return yc end
   end
@@ -563,7 +574,7 @@ function PaletteFX.monPal(data, species, transformed)
     name = data.palettes.pokemon[species] or "MEWMON"
     return data.palettes.palettes[name]
   end
-  if GameVersion.isYellow() then
+  if PaletteFX.yellowColors() then
     local y = PaletteFX.yellowPack()
     if y and y.pokemon then
       name = y.pokemon[species] or "MEWMON"

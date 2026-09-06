@@ -312,7 +312,9 @@ function SaveData.defaultOptions()
     speedBattle = 1,
     speedMenu = 1,
     -- port display options (OptionsMenu / hotkeys 2/3/4)
-    colors = "gbc",
+    -- pokered-plus: Pokemon Yellow's Game Boy Color palettes. Other modes
+    -- from OPTIONS > COLORS. Escape hatch: branch `stock-defaults`.
+    colors = "yellow",
     tilt = 0,
     -- survey zoom offset from window fit scale (0 = FIT); see Zoom.lua
     zoom = 0,

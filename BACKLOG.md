@@ -15,7 +15,7 @@ Convención de vías: **[opción]** = ya existe como ajuste · **[mod]** = vía 
 | # | Cambio | Vía | Estado | Notas |
 |---|---|---|---|---|
 | 1.1 | Pantalla panorámica (batalla widescreen 304×144) | [fuente] `SaveData.lua` | HECHO | `battleLayout = "wide"` por defecto (commit). Cambia la navegación del menú de ataques a grid — a corregir después. Tests de paridad afectados repinneados a `"og"`. **Escape:** rama `stock-defaults`. |
-| 1.2 | Colores de Pokémon Amarillo en Red | [fuente] `PaletteFX` | PENDIENTE | Los sprites de Yellow YA están (1.4). Falta forzar el pack de paletas de Yellow en Red: `src/render/PaletteFX.lua` — `yellowPack()` / `yellowCgbNamedPal()` sólo se usan bajo `GameVersion.isYellow()`. Hay que meter un flag (o el mod) que active esa rama en Red. |
+| 1.2 | Colores de Pokémon Amarillo en Red | [fuente] `PaletteFX` | HECHO | Nuevo modo de COLORS **`"yellow"`** en `src/render/PaletteFX.lua` (helper `yellowColors()` + `usesYellowCgb` extendido): pinta cualquier juego con las CGBBasePalettes de `data/palettes_yellow.lua` — las paletas Game Boy Color auténticas de Yellow (pueblos, cuevas, menús, barras de HP, sprites de combate). Por defecto en `SaveData.lua`. Otras opciones en OPTIONS → COLORS. **Escape:** rama `stock-defaults`. |
 | 1.3 | Texto rápido por defecto | [fuente] `SaveData.lua` | HECHO | `textSpeed = 1` (FAST). Test repinneado. |
 | 1.4 | Sprites de Pokémon de Amarillo sobre Red | [datos] overlay de cache | HECHO | `scripts/pokered_plus_yellow_gfx.lua` copia los 305 PNGs de batalla de Yellow sobre el cache de Red y ajusta `frontSize` de las 7 especies que cambiaron de tamaño. **Re-ejecutar tras cada re-importación de Red.** `--revert` para deshacer. |
 
