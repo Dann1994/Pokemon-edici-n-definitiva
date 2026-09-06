@@ -283,6 +283,7 @@ do
   Data.rulesets = {
     gen1_faithful = ruleset,
     modern_clean = require("src.battle.rulesets.modern_clean"),
+    modern = require("src.battle.rulesets.modern"),
     aaa_rules = { name = "aaa rules" },
     zz_hidden = { name = "hidden rules", hidden = true },
   }
@@ -300,17 +301,19 @@ do
     menu:update(1 / 60)
     pressed = {}
   end
-  check(game.save.options.ruleset == "gen1_faithful",
+  -- pokered-plus: SaveData's default ruleset is now "modern".
+  -- Sorted non-hidden ids: aaa_rules, gen1_faithful, modern, modern_clean.
+  check(game.save.options.ruleset == "modern",
         "new saves start on the default ruleset")
   press("right")
   check(game.save.options.ruleset == "modern_clean",
         "right steps to the next sorted id")
   press("right")
   check(game.save.options.ruleset == "aaa_rules",
-        "a mod-registered ruleset is selectable")
+        "the cycle wraps to a mod-registered ruleset")
   press("right")
   check(game.save.options.ruleset == "gen1_faithful",
-        "the cycle wraps and never offers the hidden record")
+        "and never offers the hidden record")
   press("left")
   check(game.save.options.ruleset == "aaa_rules", "left steps backwards")
 

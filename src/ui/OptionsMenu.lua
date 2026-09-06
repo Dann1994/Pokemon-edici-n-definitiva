@@ -61,6 +61,7 @@ local SPEEDS = { { 1, "FAST" }, { 3, "MEDIUM" }, { 5, "SLOW" } }
 local Rulesets = {
   gen1_faithful = require("src.battle.rulesets.gen1_faithful"),
   modern_clean = require("src.battle.rulesets.modern_clean"),
+  modern = require("src.battle.rulesets.modern"),
 }
 local FILTERS = { "OFF", "1X", "2X", "3X" }
 local DATE_FORMATS = {

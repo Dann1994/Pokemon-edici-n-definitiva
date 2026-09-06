@@ -14,42 +14,34 @@ Convención de vías: **[opción]** = ya existe como ajuste · **[mod]** = vía 
 
 | # | Cambio | Vía | Estado | Notas |
 |---|---|---|---|---|
-| 1.1 | Pantalla panorámica (batalla widescreen 304×144) | [opción] `battleLayout="wide"` | NECESITA-DECISIÓN | Ya existe y funciona: OPTIONS → BATTLE LAYOUT → WIDE. **Probé ponerlo por defecto en `SaveData.lua` y rompe `tests/parity_J`**: el layout wide cambia la navegación del menú de ataques (grid en vez de lista, `BattleState:moveGridNavigation`). Hay que decidir si asumimos ese cambio de comportamiento como "el juego de pokered-plus" o lo dejamos como opción. Revertido por ahora. |
-| 1.2 | Sistema de colores de Pokémon Amarillo | [fuente/datos] | NECESITA-DECISIÓN | El motor trae `data/palettes_yellow.lua` + `palettes_gbc_yellow.lua` y `PaletteFX.yellowPack()`, pero el modo "OG YELLOW" (`ogred`) sólo se activa en una partida de **Yellow** (`GameVersion.isYellow()`). En Red hay que forzar el pack amarillo en `PaletteFX` — parche de fuente. Alternativa simple: **jugar directamente la versión Yellow** (ya importada, seleccionable en el launcher) que trae colores + sprites + Pikachu que te sigue de fábrica. |
-| 1.3 | Modos de color disponibles hoy | [opción] `colors` | INFO | `ogred / gbc / redpp / og / og_inv / gbc_inv / classic` (`PaletteFX.MODES`). `gbc` (Advanced GBC) es el default actual. |
+| 1.1 | Pantalla panorámica (batalla widescreen 304×144) | [fuente] `SaveData.lua` | HECHO | `battleLayout = "wide"` por defecto (commit). Cambia la navegación del menú de ataques a grid — a corregir después. Tests de paridad afectados repinneados a `"og"`. **Escape:** rama `stock-defaults`. |
+| 1.2 | Colores de Pokémon Amarillo en Red | [fuente] `PaletteFX` | PENDIENTE | Los sprites de Yellow YA están (1.4). Falta forzar el pack de paletas de Yellow en Red: `src/render/PaletteFX.lua` — `yellowPack()` / `yellowCgbNamedPal()` sólo se usan bajo `GameVersion.isYellow()`. Hay que meter un flag (o el mod) que active esa rama en Red. |
+| 1.3 | Texto rápido por defecto | [fuente] `SaveData.lua` | HECHO | `textSpeed = 1` (FAST). Test repinneado. |
+| 1.4 | Sprites de Pokémon de Amarillo sobre Red | [datos] overlay de cache | HECHO | `scripts/pokered_plus_yellow_gfx.lua` copia los 305 PNGs de batalla de Yellow sobre el cache de Red y ajusta `frontSize` de las 7 especies que cambiaron de tamaño. **Re-ejecutar tras cada re-importación de Red.** `--revert` para deshacer. |
 
 ## 2. Tipos y tabla de tipos
 
 | # | Cambio | Vía | Estado | Notas |
 |---|---|---|---|---|
-| 2.1 | Añadir tipo **HADA (FAIRY)** | [mod] `type_chart:register` | LISTO-PARA-REVISAR | `mods/pokered_plus/data/types_modern.lua`. Tipo + matchups aditivos completos. Test verde. |
-| 2.2 | Añadir tipo **ACERO (STEEL)** | [mod] | LISTO-PARA-REVISAR | Íd. Resistencias completas de Steel + inmunidad a Poison. Test verde. |
-| 2.3 | Añadir tipo **SINIESTRO (DARK)** | [mod] | LISTO-PARA-REVISAR | Íd. Dark↔Psychic/Ghost/Fighting/Bug/Fairy. Test verde. |
-| 2.4 | Reasignar especies a los tipos nuevos | [mod] `pokemon:patch` | LISTO-PARA-REVISAR | Aplicado (tipos modernos canónicos): CLEFAIRY, CLEFABLE → FAIRY puro; JIGGLYPUFF, WIGGLYTUFF → NORMAL/FAIRY; MR_MIME → PSYCHIC/FAIRY; MAGNEMITE, MAGNETON → ELECTRIC/STEEL. Sin candidatos Kanto para DARK. **Confirmar: ¿Clefairy pura Hada o Normal/Hada?** |
-| 2.5 | "Actualizar tabla de tipos" a la moderna (Gen 6) | [mod] `type_chart:override` | NECESITA-DECISIÓN | Reescribir matchups vanilla de Gen 1: Bug↔Poison 2× → 0.5×, Ice→Fire ½, Ghost↔Psychic, Poison→Bug… Cambio de balance grande, **no aplicado**. Se haría por `override("ATK>DEF", {multiplier=N})` (escala ×10). Pendiente tu OK. |
-| 2.6 | **Split físico/especial por movimiento** (moderno) | [mod] `moves:patch` | LISTO-PARA-REVISAR | El motor YA lo soportaba (`src/battle/Damage.lua:143`). `mods/pokered_plus/data/move_categories.lua` puebla `category` en los 165 movimientos (categorías Gen 4+ de PokeAPI). 164 aplicados (STRUGGLE está reservado por el motor). Test verde. |
+| 2.1–2.3 | Tipos **HADA / ACERO / SINIESTRO** | [mod] `type_chart` | HECHO | `mods/pokered_plus/data/types_modern.lua`. Registrados con la tabla Gen 6 completa. Test verde. |
+| 2.4 | Reasignar especies a los tipos nuevos | [mod] `pokemon:patch` | HECHO | Tipos Gen 6 canónicos: CLEFAIRY, CLEFABLE → HADA puro (como en Gen 6); JIGGLYPUFF, WIGGLYTUFF → NORMAL/HADA; MR_MIME → PSÍQUICO/HADA; MAGNEMITE, MAGNETON → ELÉCTRICO/ACERO. |
+| 2.5 | Tabla de tipos completa Gen 6 | [mod] `type_chart:override` | HECHO | `data/types_modern.lua` `chart` — 120 celdas para los 18 tipos, sobrescribe las filas vanilla de Gen 1. Corrige el bug Fantasma→Psíquico (0→2×), nerfea Bicho↔Veneno, Fuego resiste Hielo, quita `POISON>BUG`, etc. Test verde. |
+| 2.6 | **Split físico/especial por movimiento** | [mod] `moves:patch` | HECHO | `data/move_categories.lua` — 164/165 movimientos con su categoría Gen 4+ (STRUGGLE reservado por el motor). Test verde. |
 
 ## 3. Corrección de bugs conocidos
 
-### 3.1 Bugs de batalla → ruleset `modern` (en `mods/pokered_plus`)
+### 3.1 Bugs de batalla → ruleset `modern` (POR DEFECTO)
 
-Registrado vía `mod.content.rulesets:register("modern", {...})` con todos los
-flags en su valor "arreglado". **Estado: LISTO-PARA-REVISAR** — aparece en
-OPTIONS → RULESET → MODERN. Falta decidir si lo hacemos el ruleset por defecto
-(hoy el default sigue siendo `gen1_faithful`). Test verde.
+**HECHO.** `src/battle/rulesets/modern.lua` (ahora es un ruleset *builtin*,
+registrado igual que `gen1_faithful` en `BattleState`, `BattleCheckpoint`,
+`OptionsMenu`, `LinkBattle`, `Builtins`). `src/core/SaveData.lua` lo pone como
+default de las partidas nuevas. FAITHFUL sigue disponible en OPTIONS → RULESET.
+**Escape:** rama `stock-defaults`.
 
-| Bug | Flag | Estado |
-|---|---|---|
-| Fallo 1/256 en moves de 100% precisión | `oneIn256Miss=false` | LISTO-PARA-REVISAR |
-| Focus Energy **divide** el crítico ×¼ en vez de ×4 | `focusEnergyBug=false` | LISTO-PARA-REVISAR |
-| Críticos ignoran los stat stages | `critIgnoresStages=false` | LISTO-PARA-REVISAR |
-| Críticos usan velocidad base, no la actual | `critUsesBaseSpeed=false` | LISTO-PARA-REVISAR |
-| Enemigos con PP infinito (nunca Struggle) | `enemyUnlimitedPP=false` | LISTO-PARA-REVISAR |
-| Hyper Beam no recarga si el objetivo cae | `hyperBeamSkipRechargeOnKO=false` | LISTO-PARA-REVISAR |
-| Residuales (veneno/quemadura/drenadoras) tras cada move en vez de fin de turno | `residualAfterMove=false` | LISTO-PARA-REVISAR |
-| Re-aplicación de badge boost al bajar/subir stats | `badgeBoostReapplyBug=false` | LISTO-PARA-REVISAR |
-| "Daño 0 = fallo" | `zeroDamageMiss=false` | LISTO-PARA-REVISAR |
-| Penalización de status "horneada" en el stat | `statusPenaltyIsBaked=false` | LISTO-PARA-REVISAR |
+Flags apagados (todos): `oneIn256Miss`, `focusEnergyBug`, `critIgnoresStages`,
+`critUsesBaseSpeed`, `enemyUnlimitedPP`, `hyperBeamSkipRechargeOnKO`,
+`residualAfterMove`, `badgeBoostReapplyBug`, `zeroDamageMiss`,
+`statusPenaltyIsBaked`.
 
 ### 3.2 Bugs de la lista del usuario (mapas / objetos / menús) → revisar vs `tests/parity_*`
 
@@ -78,9 +70,9 @@ rama "Lite".
 
 | # | Cambio | Vía | Estado | Notas |
 |---|---|---|---|---|
-| 4.1 | Reemplazar sprites de Pokémon por los de **Amarillo** | [datos] extractor | NECESITA-DECISIÓN | **Yellow ya importado** (SHA-1 `cc7d0326…` verificado; cache en `%APPDATA%\LOVE\pokemon-love2d\yellow\`, 633 archivos). Opciones: (a) mod GRAPHICS que apunte los `spriteFront/spriteBack` de cada especie al PNG del cache de Yellow; (b) parche en el extractor para que Red lea el banco de sprites de Yellow. Pendiente elegir. |
-| 4.2 | **Mini sprites** (iconos de menú estilo Gen 2) para los 151 | [datos/mod] desde `cRz-Shadows/Pokemon_Yellow_Legacy` | FUTURO | Anotado como mejora futura. Gen 1 tiene sólo ~10 iconos genéricos (`data/generated/icons.lua`). Sacar los 151 mini-sprites de Yellow Legacy y meterlos como set nuevo. |
-| 4.3 | Mejoras de calidad de vida del repo | [opción/mod] | EN CURSO | Ver §5. |
+| 4.1 | Sprites de Pokémon de **Amarillo** sobre Red | [datos] overlay | HECHO | `scripts/pokered_plus_yellow_gfx.lua`: copia los 305 PNGs de `battle/front` + `battle/back` de Yellow sobre el cache de Red y corrige `frontSize` de 7 especies (dewgong, doduo, dugtrio, gastly, gengar, haunter, mankey). Re-ejecutar tras re-importar Red. Guarda backup en `battle_red_backup/`; `--revert` restaura. Falta la solución permanente (patch al extractor) para que sea automático. |
+| 4.2 | **Mini sprites** (iconos de menú estilo Gen 2) para los 151 | [datos/mod] desde `cRz-Shadows/Pokemon_Yellow_Legacy` | FUTURO | Gen 1 tiene sólo ~10 iconos genéricos (`data/generated/icons.lua`). Sacar los 151 mini-sprites de Yellow Legacy y meterlos como set nuevo. |
+| 4.3 | Mejoras de calidad de vida del repo | [opción/mod] | EN CURSO | Ver §5. `textSpeed` ya en FAST (§1.3). |
 
 ## 5. Calidad de vida (lo que ya trae el repo)
 
@@ -120,21 +112,33 @@ Catálogo — decidir cuáles activar por defecto:
   `modkit` necesita `MODKIT_LUAJIT` o luajit en PATH:
   `export MODKIT_LUAJIT="/c/Users/dani_/AppData/Local/Programs/LuaJIT/bin/luajit.exe"`.
 - ROM de Red verificada e importada.
-- **`mods/pokered_plus`** (v0.1.0) — el mod de trabajo del fork. `modkit validate`
-  + `modkit lint` + `tests/pokered_plus_test.lua` en verde. Contiene: split
-  físico/especial, tipos FAIRY/STEEL/DARK, ruleset `modern`. Se activa desde
-  MOD MANAGER (F10) o la pestaña MODS del launcher.
-- Baseline de tests: `luajit tests/run_tests.lua` da ~11 fallos preexistentes
-  (audio ausente del `data/generated/` del repo, detección de FPS headless,
-  `python3` para unos tests de modkit) — no son regresiones nuestras.
+- **`mods/pokered_plus`** (v0.2.0) — el mod de trabajo del fork. `modkit validate`
+  + `modkit lint` + `tests/pokered_plus_test.lua` (35/35) en verde. Contiene:
+  split físico/especial, tipos HADA/ACERO/SINIESTRO + tabla Gen 6 completa,
+  `constants.defaultRuleset`. Auto-activado (no `experimental`, vive en `mods/`).
+- Ruleset `modern` = builtin + default (§3.1). Widescreen + texto rápido =
+  defaults en `SaveData.lua`. Sprites de Yellow = overlay de cache (§1.4).
+  **Escape de todos los defaults:** rama `stock-defaults`.
+- Baseline de tests: `luajit tests/run_tests.lua` = **11 fallos preexistentes**
+  (audio ausente del `data/generated/` del repo, FPS headless, `python3` para
+  unos tests de modkit). Los cambios de pokered-plus **no añaden regresiones**
+  (tests de paridad afectados por los defaults nuevos repinneados a mano).
 
 ---
 
-## Decisiones que necesito de vos (resumen)
+## Decisiones aplicadas (sesión 2026-09-06)
 
-1. **§2.4** — lista final de qué especie recibe qué tipo (¿Clefairy pura Hada o Normal/Hada?, etc.).
-2. **§2.5** — ¿aplicamos la tabla de tipos Gen 6 completa (cambia balance de todo el juego) o sólo añadimos las interacciones de los tipos nuevos?
-3. **§1.2 / §7.1** — colores de Amarillo en Red: ¿vale un parche de fuente en `PaletteFX`?
-4. **§4.1** — sprites de Amarillo: ¿importación cruzada o mod de gráficos?
-5. **§5** — qué QoL activar por defecto (textSpeed máx, battleStyle SET, etc.).
-6. **§7.2** — documento del evento de Mew.
+- ✅ Tabla de tipos → **Gen 6 completa**; Clefairy → **Hada puro** (como Gen 6).
+- ✅ Widescreen → **por defecto** (detalles de navegación del menú, después).
+- ✅ Ruleset → **`modern` por defecto**.
+- ✅ Juego base **Red** + **sprites de Yellow** aplicados.
+- ✅ Texto **rápido** por defecto.
+
+## Pendiente de vos
+
+1. **§1.2** — colores de Yellow en Red: confirmar el parche de fuente en `PaletteFX`
+   (los sprites ya están; falta la paleta).
+2. **§7.2** — documento del evento de captura de Mew.
+3. **§7.3** — detalles de la batalla contra Oak.
+4. **§7.1** — qué eventos nuevos.
+5. **§4.2** — mini sprites (Yellow Legacy) — marcado FUTURO.

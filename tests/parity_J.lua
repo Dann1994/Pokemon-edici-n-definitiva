@@ -11,6 +11,11 @@ local check, eq = S.check, S.eq
 local Game = require("src.core.Game")
 Game.data = Data
 Game.save = require("src.core.SaveData").newGame()
+-- pokered-plus changes two SaveData defaults this faithful-parity file
+-- depends on: the "modern" ruleset and the "wide" battle layout (whose
+-- move menu is a grid, not the classic list). Pin both.
+Game.save.options.ruleset = "gen1_faithful"
+Game.save.options.battleLayout = "og"
 local Font = require("src.render.Font")
 if not pcall(Font.encode, "A") then Font.load(Data) end
 local Pokemon = require("src.pokemon.Pokemon")

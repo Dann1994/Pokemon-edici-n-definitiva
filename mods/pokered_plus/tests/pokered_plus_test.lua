@@ -27,14 +27,25 @@ T.check(Data.type_chart.types.DARK ~= nil, "DARK type registered")
 
 local TypeChart = require("src.battle.TypeChart")
 TypeChart.load(Data)
+-- new types
 T.eq(TypeChart.effectiveness("FAIRY", { "DRAGON" }), 20, "FAIRY 2x vs DRAGON")
 T.eq(TypeChart.effectiveness("DRAGON", { "FAIRY" }), 0, "DRAGON 0x vs FAIRY")
 T.eq(TypeChart.effectiveness("POISON", { "STEEL" }), 0, "POISON 0x vs STEEL")
 T.eq(TypeChart.effectiveness("FIGHTING", { "STEEL" }), 20, "FIGHTING 2x vs STEEL")
 T.eq(TypeChart.effectiveness("DARK", { "PSYCHIC_TYPE" }), 20, "DARK 2x vs PSYCHIC")
 T.eq(TypeChart.effectiveness("PSYCHIC_TYPE", { "DARK" }), 0, "PSYCHIC 0x vs DARK")
--- a vanilla row still works
+T.eq(TypeChart.effectiveness("STEEL", { "FAIRY" }), 20, "STEEL 2x vs FAIRY")
+T.eq(TypeChart.effectiveness("STEEL", { "WATER" }), 5, "STEEL 0.5x vs WATER")
+-- Gen 6 rewrites of vanilla rows
+T.eq(TypeChart.effectiveness("GHOST", { "PSYCHIC_TYPE" }), 20,
+  "GHOST 2x vs PSYCHIC (Gen 1 no-effect bug fixed)")
+T.eq(TypeChart.effectiveness("BUG", { "POISON" }), 5, "BUG 0.5x vs POISON (was 2x)")
+T.eq(TypeChart.effectiveness("POISON", { "BUG" }), 10, "POISON neutral vs BUG (was 2x)")
+T.eq(TypeChart.effectiveness("ICE", { "FIRE" }), 5, "ICE 0.5x vs FIRE (Fire now resists)")
+T.eq(TypeChart.effectiveness("GRASS", { "STEEL" }), 5, "GRASS 0.5x vs STEEL")
+-- an unchanged vanilla row still works
 T.eq(TypeChart.effectiveness("WATER", { "FIRE" }), 20, "WATER 2x vs FIRE unchanged")
+T.eq(TypeChart.effectiveness("ELECTRIC", { "GROUND" }), 0, "ELECTRIC 0x vs GROUND unchanged")
 
 -- 3. species retypes
 T.eq(Data.pokemon.CLEFAIRY.types[1], "FAIRY", "CLEFAIRY is FAIRY")
@@ -47,6 +58,7 @@ T.check(Data.rulesets ~= nil and Data.rulesets.modern ~= nil,
   "modern ruleset registered")
 T.eq(Data.rulesets.modern.oneIn256Miss, false, "modern ruleset kills the 1/256 miss")
 T.eq(Data.rulesets.gen1_faithful.oneIn256Miss, true, "gen1_faithful is untouched")
+T.eq(Data.constants.defaultRuleset, "modern", "modern is the default ruleset")
 
 run.release()
 T.finish("pokered_plus")

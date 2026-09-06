@@ -263,12 +263,14 @@ function SaveData.defaultOptions()
   return {
     -- textSpeed 3 = MEDIUM, matching InitOptions' TEXT_DELAY_MEDIUM
     -- in wOptions (engine/menus/main_menu.asm)
-    textSpeed = 3,
+    -- pokered-plus: FAST by default (SPEEDS in OptionsMenu: 1 FAST / 3 MED / 5 SLOW)
+    textSpeed = 1,
     animations = true,
     battleStyle = "shift",
     -- battle screen composition: og (the 160x144 original) | wide
     -- (304x144, src/battle/WideBattle.lua)
-    battleLayout = "og",
+    -- pokered-plus: widescreen by default. Escape hatch: branch `stock-defaults`.
+    battleLayout = "wide",
     -- BATTLE SIZE: "fixed" = the classic integer-scaled letterbox; "fill" =
     -- scale the battle surface to the window so it fills vertically.  See
     -- BattleState:wantsFillScale.
@@ -292,7 +294,10 @@ function SaveData.defaultOptions()
     -- moves the screen furniture, so it is opt-in.
     -- See Game.dynamicUI, Renderer:setUIAnchor and Renderer:uiScale.
     uiLayout = "centered",
-    ruleset = "gen1_faithful",
+    -- pokered-plus: the bug-free ruleset registered by mods/pokered_plus.
+    -- Falls back to gen1_faithful with a log line if that mod is disabled.
+    -- Escape hatch: branch `stock-defaults`.
+    ruleset = "modern",
     -- 0-7 like the GB's NR50 master volume
     musicVol = 7,
     sfxVol = 7,

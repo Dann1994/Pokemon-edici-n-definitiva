@@ -8,6 +8,7 @@ local ScriptRunner = require("src.script.ScriptRunner")
 local BUILTIN_RULESETS = {
   gen1_faithful = require("src.battle.rulesets.gen1_faithful"),
   modern_clean = require("src.battle.rulesets.modern_clean"),
+  modern = require("src.battle.rulesets.modern"),
 }
 
 local function rulesets(game)

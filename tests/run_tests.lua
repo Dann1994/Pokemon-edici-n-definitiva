@@ -928,6 +928,9 @@ do
   do
     Game.save.party = { Pokemon.new(Data, "BULBASAUR", 10) }
     local ab = BattleState.newWild(Game, "RATTATA", 5)
+    -- pokered-plus defaults to the "modern" ruleset; this is a
+    -- gen1_faithful quirk, so pin it.
+    ab.ruleset = require("src.battle.rulesets.gen1_faithful")
     ab.rng = mkseq({ 255 }) -- the 1/256 miss
     ab:performMove(ab.player, ab.enemy, { id = "THUNDER_WAVE", pp = 10 })
     eq(ab.enemy.mon.status, nil, "THUNDER WAVE misses on the 255 roll")
@@ -2817,8 +2820,8 @@ do
     local row = rowAt(cur)
     return row ~= nil and row.id == id
   end
-  eq(og.save.options.textSpeed, 3,
-     "new saves default to MEDIUM text (InitOptions TEXT_DELAY_MEDIUM)")
+  eq(og.save.options.textSpeed, 1,
+     "new saves default to FAST text (pokered-plus)")
   eq(og.save.options.colors, "gbc", "new saves default COLORS to GBC")
   eq(og.save.options.tilt, 0, "new saves default TILT to OFF")
   eq(og.save.options.zoom, 0, "new saves default ZOOM to FIT")
@@ -2827,11 +2830,12 @@ do
      "new saves default VIDEO MODE to WINDOWED")
   eq(om.scroll, 0, "options viewport starts at the top")
   check(seek("battleLayout"), "cursor reaches BATTLE LAYOUT")
+  -- pokered-plus defaults BATTLE LAYOUT to WIDE, so the first A cycles to OG.
   press("a")
-  eq(og.save.options.battleLayout, "wide",
-     "A switches the battle screen to the WIDE layout")
+  eq(og.save.options.battleLayout, "og",
+     "A switches the battle screen to the OG layout")
   press("a")
-  eq(og.save.options.battleLayout, "og", "BATTLE LAYOUT wraps back to OG")
+  eq(og.save.options.battleLayout, "wide", "BATTLE LAYOUT wraps back to WIDE")
   -- the BATTLE page's sixth row sits past the 4-box viewport
   check(seek("battleBg"), "cursor reaches BATTLE BG")
   eq(cur.scroll, cur.index - OptionRows.VISIBLE,

@@ -45,17 +45,35 @@ return function(mod)
   end
   mod.log:info("phys/spec split: categorised %d moves", split)
 
-  -- ------------------------------------------------------------ 2. new types
+  -- ---------------------------------------- 2. new types + full Gen 6 chart
   local modern = readTable(mod, "data/types_modern.lua")
   if modern then
+    local tc = mod.content.type_chart
+
     for id, record in pairs(modern.types) do
-      mod.content.type_chart:register(id, record)
+      tc:register(id, record)
     end
-    for pair, multiplier in pairs(modern.matchups) do
-      -- every pair here involves a brand-new type, so it cannot already
-      -- exist in the vanilla chart -- register, not override
-      mod.content.type_chart:register(pair, { multiplier = multiplier })
+
+    -- full Gen 6 chart: override the vanilla row where it exists, register
+    -- it where it does not
+    local cells = 0
+    for attacker, row in pairs(modern.chart) do
+      for defender, multiplier in pairs(row) do
+        local pair = attacker .. ">" .. defender
+        if tc:get(pair) ~= nil then
+          tc:override(pair, { multiplier = multiplier })
+        else
+          tc:register(pair, { multiplier = multiplier })
+        end
+        cells = cells + 1
+      end
     end
+    for _, pair in ipairs(modern.neutralized or {}) do
+      if tc:get(pair) ~= nil then tc:remove(pair) end
+    end
+    mod.log:info("type chart: Gen 6 (%d cells, %d neutralised)",
+                 cells, #(modern.neutralized or {}))
+
     local retyped = 0
     for id, types in pairs(modern.species) do
       if mod.content.pokemon:get(id) then
@@ -68,23 +86,10 @@ return function(mod)
     mod.log:info("types: +FAIRY +STEEL +DARK, %d species retyped", retyped)
   end
 
-  -- ------------------------------------------------------- 3. modern ruleset
-  -- Mirrors src/battle/rulesets/gen1_faithful.lua with every quirk flag
-  -- flipped to its fixed value.  Selectable as OPTIONS > RULESET > MODERN.
-  mod.content.rulesets:register("modern", {
-    name = "modern",
-    oneIn256Miss = false,
-    critUsesBaseSpeed = false,
-    critIgnoresStages = false,
-    focusEnergyBug = false,
-    enemyUnlimitedPP = false,
-    hyperBeamSkipRechargeOnKO = false,
-    residualAfterMove = false,
-    badgeBoostReapplyBug = false,
-    zeroDamageMiss = false,
-    statusPenaltyIsBaked = false,
-    randMin = 217,
-    randMax = 255,
-  })
-  mod.log:info("registered the 'modern' ruleset (opt in from OPTIONS)")
+  -- ---------------------------------------------------- 3. default ruleset
+  -- The "modern" ruleset (bug-free Gen 1) is now a builtin
+  -- (src/battle/rulesets/modern.lua) and src/core/SaveData.lua makes it the
+  -- default for new saves.  Keep the engine fallback in step for any
+  -- context that reads a nil options.ruleset.
+  mod.content.constants:patch("defaultRuleset", "modern")
 end

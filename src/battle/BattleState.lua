@@ -213,6 +213,7 @@ end
 local Rulesets = {
   gen1_faithful = require("src.battle.rulesets.gen1_faithful"),
   modern_clean = require("src.battle.rulesets.modern_clean"),
+  modern = require("src.battle.rulesets.modern"),
 }
 
 -- the Poké Ball toss chain (TossBallAnimation) plays even with battle

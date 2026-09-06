@@ -1,39 +1,42 @@
 # Pokered Plus
 
 Quality-of-life and modernisation overhaul for the gen1recomp port of
-Pokemon Red. This is the working mod for the `pokered-plus` fork; see
-`../../BACKLOG.md` for the full roadmap.
+Pokemon Red. The working mod for the `pokered-plus` fork; full roadmap in
+`../../BACKLOG.md`.
 
-## What 0.1.0 does
+## What it does (0.2.0)
 
 1. **Physical / special / status split.** Every damaging move is tagged
    with its Gen 4+ category. The engine already prefers `move.category`
-   over the Gen 1 type-based split (`src/battle/Damage.lua`), so damage,
-   burn, Reflect and Light Screen all follow the modern rules.
-2. **FAIRY, STEEL and DARK types.** Registered with their standard
-   type-chart interactions (additive only -- no vanilla matchup is
-   rewritten). Seven Kanto species get their canonical modern typings.
-3. **`modern` ruleset.** Adds a RULESET choice in OPTIONS that switches off
-   the Gen 1 battle bugs (1/256 miss, Focus Energy quarter-crit, badge
-   boost re-apply, faithful residual timing, enemy infinite PP, and more).
-   Not the default -- pick it per save.
+   over the Gen 1 type-based split (`src/battle/Damage.lua`).
+2. **Full Gen 6 type chart.** FAIRY, STEEL and DARK types, plus every
+   vanilla matchup rewritten to Gen 6 values (Ghost/Psychic bug fixed,
+   Bug<->Poison nerfed, Fire resists Ice, `POISON>BUG` neutralised, ...).
+   Seven Kanto species get their canonical Gen 6 typings.
+3. **`modern` default ruleset.** The bug-free Gen 1 ruleset
+   (`src/battle/rulesets/modern.lua`) is a builtin and the SaveData
+   default; this mod keeps `constants.defaultRuleset` in step. Pick
+   FAITHFUL from OPTIONS > RULESET for the original bugs.
 
-## Try it
+Sibling changes that are **not** in this mod:
+
+- Widescreen battles, FAST text, `modern` default -> `src/core/SaveData.lua`
+  (escape hatch: the `stock-defaults` branch).
+- Yellow battle sprites -> `scripts/pokered_plus_yellow_gfx.lua` (cache overlay,
+  re-run after each Red import; `--revert` to undo).
+
+## Verify
 
 ```sh
+export MODKIT_LUAJIT=".../LuaJIT/bin/luajit.exe"
 python3 tools/modkit.py validate mods/pokered_plus --base imported
-python3 tools/modkit.py lint mods/pokered_plus
 luajit mods/pokered_plus/tests/pokered_plus_test.lua
 ```
 
-Then enable it: it lives in `mods/` (not `mods/examples/`), so the loader
-discovers it; turn it on from the in-game MOD MANAGER (F10) or the launcher
-MODS tab.
-
 ## Not done yet (see BACKLOG.md)
 
-- Full Gen 6 type chart rewrite (balance decision)
-- Yellow colour system / Yellow sprites on Red
-- Map, item and menu bug fixes
+- Yellow colour system on Red (PaletteFX source patch)
+- Mini sprites (Yellow Legacy)
+- Map / item / menu bug fixes
 - New events, Mew capture, Prof. Oak battle
 - LAN play verification

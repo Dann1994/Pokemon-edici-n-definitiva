@@ -7,17 +7,17 @@ return {
   tags = { "modernisation", "mechanic", "types", "balance" },
   differences = {
     changed = {
-      "every damaging move now carries its Gen 4+ physical/special category; damage uses it instead of the Gen 1 type-based split",
+      "every damaging move carries its Gen 4+ physical/special category; damage uses it instead of the Gen 1 type-based split",
+      "the type chart is the full Gen 6 chart (Ghost/Psychic bug fixed, Bug<->Poison nerfed, Fire resists Ice, etc.)",
       "CLEFAIRY, CLEFABLE -> FAIRY; JIGGLYPUFF, WIGGLYTUFF -> NORMAL/FAIRY; MR_MIME -> PSYCHIC/FAIRY; MAGNEMITE, MAGNETON -> ELECTRIC/STEEL",
+      "'modern' (bug-free Gen 1 battle) is the default ruleset -- see src/battle/rulesets/modern.lua and the stock-defaults branch",
     },
     added = {
-      "FAIRY, STEEL and DARK types with their standard type-chart interactions",
-      "OPTIONS > RULESET > MODERN: turns off the 1/256 miss, the Focus Energy bug, the badge-boost bug, faithful residual timing, and more",
+      "FAIRY, STEEL and DARK types",
     },
     known = {
-      "the modern ruleset is NOT the default -- select it per save",
-      "vanilla Gen 1 chart quirks (Bug<->Poison, Ice->Fire, Ghost<->Psychic) are unchanged; that rewrite is a separate opt-in (BACKLOG 2.5)",
-      "species retypes are the canonical modern typings -- review before shipping",
+      "species retypes are the canonical Gen 6 typings",
+      "Yellow battle sprites are applied by scripts/pokered_plus_yellow_gfx.lua (a cache overlay), not by this mod",
     },
   },
   credits = {
