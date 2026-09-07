@@ -50,23 +50,33 @@ estatua 1ª vez → texto ; 2ª vez → play_cry + static_battle MEW → MOD_MEW
   confirmar: `TEXT_VERMILIONCITY_SAILOR1` hoy es una función Lua en
   `data/scripts/story.lua`; `MapScripts.baseTalk` debería alcanzarla).
 
-## Decisiones abiertas (necesito tu OK antes de codificar)
+## Decisiones (resueltas por el usuario)
 
-1. **Isla Suprema — tamaño/forma.** Propuesta: ~2–3 pantallas. Costa (warp del
-   barco) → claro con el cartel "— F." → bosque corto y lineal → claro final
-   con la estatua y unas ruinas. Tileset `OVERWORLD` (tiene césped, árboles,
-   agua, flores, estatua). ¿OK o querés algo distinto?
-2. **Nivel de Mew.** Mewtwo estático es **nv. 70**. Propuesta: **Mew nv. 70**
-   (a la par) o nv. 60. ¿Cuál?
-3. **Encuentros salvajes en la isla.** Propuesta: un parche de hierba con
-   Chansey / Tangela / Scyther / Pinsir / Kangaskhan (raros, aire "tropical").
-   ¿O sin encuentros?
-4. **Los documentos.** Como **carteles** (`signs`) que abren una caja de texto
-   con `\f` para pasar de página. Es lo más vanilla. ¿OK?
-5. **Música de la isla.** Reutilizar una pista existente. Opciones: tema de
-   ruta marina, tema de Isla Canela, tema del Bosque Verde, o el tema de
-   cueva "misterioso". ¿Cuál?
-6. **Mod propio vs. dentro de pokered_plus.** Está como mod propio
-   `mods/mew_event` (activable/desactivable aparte). ¿OK?
-7. **La firma "— F."** — texto literal idéntico en los documentos y en el
-   cartel. ¿OK?
+1. **Isla Suprema — tamaño/forma.** Un mapa `ISLA_SUPREMA`, tileset
+   `OVERWORLD`, 8×13 bloques: muelle al sur (el marinero espera para volver a
+   Carmín) → senda al norte → cartel "- F." junto al bosque → claro con la
+   estatua. Datos en `data/isla_suprema.lua`. **Pendiente: pulido visual en
+   Tiled** (los bloques son funcionales pero simples).
+2. **Nivel de Mew.** nv. 60.
+3. **Encuentros salvajes en la isla.** Ninguno (no se registran `encounters`).
+4. **Los documentos.** Etapa 1: en los objetos "papeles" del 3er piso, no en
+   `signs`. El cartel de la isla sí es un `sign`.
+5. **Música de la isla.** `Music_Lavender` (tema inquietante) en `onEnter`.
+   Nota: `data.audio` no está en este build, así que es no-op hasta
+   regenerarlo. La idea original (ruta marina en la costa + tema Mansión en el
+   bosque) queda como mejora futura vía `onStep`.
+6. **Mod propio** `mods/mew_event`. Sí.
+7. **La firma "- F."** — literal idéntico en documentos y cartel. Sí.
+
+## Estado de implementación
+
+| Etapa | Estado | Archivo |
+|---|---|---|
+| 1 Mansión 3F (científico + 6 documentos) | HECHO | `main.lua`, `data/documents.lua` |
+| 2 Sr. Fuji + Mapa Viejo | HECHO | `main.lua` |
+| 3 Marinero de Carmín (`TEXT_VERMILIONCITY_SAILOR1`) | HECHO | `main.lua` |
+| 4 Mapa Isla Suprema | HECHO (falta pulido) | `data/isla_suprema.lua` |
+| 5 Estatua + combate contra Mew | HECHO | `main.lua` |
+
+Tests: `tests/mew_event_test.lua` 47/47; simulaciones `simulate_stage1/2/3.lua`
+11 + 13 + 12.

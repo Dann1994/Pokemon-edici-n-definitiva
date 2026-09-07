@@ -16,6 +16,11 @@ local FUJI_MYSTERY = "MOD_MEW_FUJI_MYSTERY"  -- 1st Fuji talk done
 local OLD_MAP      = "MOD_MEW_OLD_MAP"       -- Fuji handed over the map
 local MAPA_VIEJO   = "MAPA_VIEJO"            -- the key item
 
+local ISLA          = "ISLA_SUPREMA"          -- the new island map id
+local ISLA_UNLOCKED = "MOD_MEW_ISLA_UNLOCKED" -- the sailor has taken you once
+local STATUE_SEEN   = "MOD_MEW_STATUE_SEEN"   -- talked to the statue once
+local MEW_CAPTURED  = "MOD_MEW_CAPTURED"      -- the encounter has happened
+
 -- new objects added to Mansion 3F, hidden until the event runs. The two
 -- extra "papeles" sit in the same lower-left room as the vanilla diary.
 local SCIENTIST = "MEW_EVENT_SCIENTIST"
@@ -359,6 +364,134 @@ return function(mod)
         { "label", "v_no_rescue" },
         { "show_text", "_MrFujisHouseMrFujiPokedexText" },
 
+        { "label", "end" },
+      },
+    },
+  })
+
+  -- ================================================================
+  --  Stage 3 -- the sailor at the Vermilion dock
+  -- ================================================================
+  -- The vanilla TEXT_VERMILIONCITY_SAILOR1 handler is a Lua function
+  -- (S.S. ANNE ticket flow), so the branch this quest does not own is
+  -- handed back to it through baseTalk, exactly like example_lost_parcel.
+  mod.content.commands:register("mew_event:base_sailor", {
+    foreground = true,
+    fn = function(ctx)
+      local base = MapScripts.baseTalk("VERMILION_CITY", "TEXT_VERMILIONCITY_SAILOR1")
+      if not base then return end
+      local runner = ctx.runner
+      base(ctx.game, ctx.overworld, ctx.npc, function() runner:resume() end)
+      runner:yield()
+    end,
+  })
+
+  mod.content.commands:register("mew_event:sail_to_isla", {
+    foreground = true,
+    fn = function(ctx)
+      require("src.script.Flags").set(ctx.save, ISLA_UNLOCKED)
+      require("src.script.Commands").warp(ctx, ISLA, 6, 24, "up")
+    end,
+  })
+
+  mod.content.map_scripts:register("VERMILION_CITY", {
+    talk = {
+      TEXT_VERMILIONCITY_SAILOR1 = {
+        -- only react to the map once Fuji has handed it over
+        { "check_flag", OLD_MAP }, { "jump_if_false", "vanilla" },
+        { "check_item", MAPA_VIEJO }, { "jump_if_false", "vanilla" },
+        { "face_player" },
+        { "check_flag", ISLA_UNLOCKED }, { "jump_if_true", "again" },
+        -- first time: he studies the map
+        { "show_text", "¿Qué es esto?" },
+        { "show_text", "Hace muchos años\nque no veía uno de\festos." },
+        { "show_text", "¿Quieres ir\nallí?" },
+        { "show_text", "No sé qué\nencontrarás..." },
+        { "show_text", "Pero si el viejo\nFUJI te entregó\fese mapa, supongo\nque tendrá sus\frazones." },
+        { "choice", { "IR", "AHORA NO" } },
+        { "jump_if_false", "end" },
+        { "mew_event:sail_to_isla" },
+        { "jump", "end" },
+        { "label", "again" },
+        { "show_text", "¿De vuelta a la\nisla?" },
+        { "choice", { "SÍ", "NO" } },
+        { "jump_if_false", "end" },
+        { "mew_event:sail_to_isla" },
+        { "jump", "end" },
+        { "label", "vanilla" },
+        { "mew_event:base_sailor" },
+        { "label", "end" },
+      },
+    },
+  })
+
+  -- ================================================================
+  --  Stage 4 + 5 -- Isla Suprema (the island map, sign, statue, Mew)
+  -- ================================================================
+  mod.content.maps:register(ISLA, readTable(mod, "data/isla_suprema.lua"))
+
+  mod.content.commands:register("mew_event:sail_home", {
+    foreground = true,
+    fn = function(ctx)
+      require("src.script.Commands").warp(ctx, "VERMILION_CITY", 18, 28, "up")
+    end,
+  })
+
+  -- the ancient statue: first touch = flavour, second = the encounter
+  mod.content.commands:register("mew_event:mew_battle", {
+    foreground = true,
+    fn = function(ctx)
+      local C = require("src.script.Commands")
+      C.play_cry(ctx, "MEW", true)
+      C.static_battle(ctx, "MEW", 60, MEW_CAPTURED)
+    end,
+  })
+
+  mod.content.map_scripts:register(ISLA, {
+    onEnter = function(game, ow)
+      -- one eerie theme for the whole island (data.audio is absent in
+      -- this build, so this is a no-op until audio data is regenerated)
+      pcall(function()
+        require("src.core.Music").play(game.data, "Music_Lavender", nil,
+          { reason = "map", mapId = ISLA })
+      end)
+    end,
+    talk = {
+      TEXT_ISLA_SUPREMA_SAILOR = {
+        { "face_player" },
+        { "show_text", "Te espero aquí." },
+        { "show_text", "¿Volvemos a\nCIUDAD CARMÍN?" },
+        { "choice", { "SÍ", "TODAVÍA NO" } },
+        { "jump_if_false", "stay" },
+        { "mew_event:sail_home" },
+        { "jump", "end" },
+        { "label", "stay" },
+        { "show_text", "Tómate tu tiempo." },
+        { "label", "end" },
+      },
+      TEXT_ISLA_SUPREMA_SIGN = {
+        { "show_text", "A quien encuentre\neste lugar:" },
+        { "show_text", "No intentes\ncapturar aquello\fque vive aquí." },
+        { "show_text", "Algunas cosas\ndeben ser\fconocidas sin\nnecesidad de ser\fposeídas." },
+        { "show_text", "     - F." },
+      },
+      TEXT_ISLA_SUPREMA_STATUE = {
+        { "check_flag", MEW_CAPTURED }, { "jump_if_true", "after" },
+        { "check_flag", STATUE_SEEN }, { "jump_if_true", "second" },
+        -- first interaction
+        { "show_text", "Es una estatua muy\nantigua." },
+        { "show_text", "No reconoces al\nPOKéMON que\frepresenta." },
+        { "set_flag", STATUE_SEEN },
+        { "jump", "end" },
+        -- second interaction: the encounter
+        { "label", "second" },
+        { "show_text", "La estatua parece\nmirarte." },
+        { "show_text", "..." },
+        { "show_text", "Algo se mueve\ndetrás de ti." },
+        { "mew_event:mew_battle" },
+        { "jump", "end" },
+        { "label", "after" },
+        { "show_text", "La estatua sigue\nahí, en silencio." },
         { "label", "end" },
       },
     },

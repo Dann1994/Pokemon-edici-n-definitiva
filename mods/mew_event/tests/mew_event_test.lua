@@ -79,5 +79,36 @@ do
     "vanilla Fuji handler still reachable behind the override")
 end
 
+-- Stage 3-5: the sailor override, the island map, sign and statue
+do
+  local verm = require("src.script.MapScripts").get("VERMILION_CITY").talk
+  T.check(verm.TEXT_VERMILIONCITY_SAILOR1 ~= nil, "Vermilion sailor talk override present")
+  T.check(require("src.script.MapScripts").baseTalk(
+    "VERMILION_CITY", "TEXT_VERMILIONCITY_SAILOR1") ~= nil,
+    "vanilla sailor handler still reachable behind the override")
+
+  local isla = Data.maps.ISLA_SUPREMA
+  T.check(isla ~= nil, "ISLA_SUPREMA registered as a map")
+  T.eq(isla.tileset, "OVERWORLD", "ISLA_SUPREMA uses the OVERWORLD tileset")
+
+  local m = require("src.world.MapLoader").load(Data, "ISLA_SUPREMA")
+  -- the dock (spawn 6,24 and the sailor at 7,24), the path north, and the
+  -- statue cell (6,3) are all walkable; the tree border is not
+  for _, c in ipairs({ { 6, 24 }, { 7, 24 }, { 6, 18 }, { 6, 12 }, { 6, 4 }, { 6, 3 } }) do
+    T.check(m:isWalkableCell(c[1], c[2]), ("island cell %d,%d walkable"):format(c[1], c[2]))
+  end
+  T.check(not m:isWalkableCell(0, 12), "island tree border is solid")
+
+  local islaTalk = require("src.script.MapScripts").get("ISLA_SUPREMA").talk
+  for _, k in ipairs({ "TEXT_ISLA_SUPREMA_SAILOR", "TEXT_ISLA_SUPREMA_SIGN",
+                       "TEXT_ISLA_SUPREMA_STATUE" }) do
+    T.check(islaTalk[k] ~= nil, k .. " handler present")
+  end
+  for _, v in ipairs({ "mew_event:sail_to_isla", "mew_event:sail_home",
+                       "mew_event:mew_battle", "mew_event:base_sailor" }) do
+    T.check(Data.commands[v] ~= nil, v .. " verb registered")
+  end
+end
+
 run.release()
 T.finish("mew_event")
