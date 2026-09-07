@@ -109,7 +109,7 @@ Catálogo — decidir cuáles activar por defecto:
 |---|---|---|---|---|
 | 7.1 | Agregar eventos nuevos | [mod] `map_scripts` + VM `src/script/` | PENDIENTE | La VM de scripting está entera (`Commands.lua`, `ScriptRunner.lua`, `Flags.lua`); scripts a mano en `data/scripts/`. Mod de ejemplo: `example_lost_parcel` (quest + NPC + diálogo). Esperando qué eventos. |
 | 7.2 | **Captura de Mew — evento "Isla Suprema"** | [mod] `mew_event` | LISTO-PARA-REVISAR | Diseño → `DESIGN.md`, plan → `PLAN.md`. Decisiones: isla "Isla Suprema", Mew nv. 60, sin encuentros salvajes, música ruta marina (costa) + tema Mansión (bosque), mod propio. **Etapa 1 HECHA** (commit): Mansión 3F — científico oculto que aparece con Liga vencida + Mewtwo capturado + Mewtwo en equipo → se acerca, reconoce a Mewtwo, huye → los "papeles" del 3er piso pasan a contener los 6 documentos de "F." → leerlos todos activa `MOD_MEW_DISCOVERED`. Test 47/47. **Etapa 2 HECHA**: casa del Sr. Fuji (Lavanda) — override de `TEXT_MRFUJISHOUSE_MR_FUJI` con máquina de estados: 1ª charla evasiva → `MOD_MEW_FUJI_MYSTERY`; con **150 de Kanto registrados + Mewtwo en el equipo** → 2ª charla: "Yo soy F.", entrega el key item **MAPA VIEJO** → `MOD_MEW_OLD_MAP`. Rama pre-Etapa-1 = diálogo vanilla de Fuji reinsertado literal. `simulate_stage2.lua` 13/13. **Etapas 3-5 HECHAS**: (3) override de `TEXT_VERMILIONCITY_SAILOR1` — con `MAPA_VIEJO` + `MOD_MEW_OLD_MAP` el marinero de Carmín ofrece el viaje (`warp` a `ISLA_SUPREMA`), rama sin mapa = flujo vanilla del S.S. Anne vía `baseTalk`. (4) mapa nuevo `ISLA_SUPREMA` (`mods/mew_event/data/isla_suprema.lua`, OVERWORLD 8×13 bloques: muelle al sur con marinero de vuelta, senda al norte, cartel "- F." junto al bosque, claro con la estatua; bloques confirmados contra el tileset vanilla; test de transitabilidad). (5) estatua (`SPRITE_FOSSIL`): 1ª interacción texto + `MOD_MEW_STATUE_SEEN`, 2ª → `play_cry MEW` + `static_battle "MEW" 60 "MOD_MEW_CAPTURED"` (se oculta capturado o derrotado). Música: `Music_Lavender` en `onEnter` (no-op hasta regenerar `data.audio`). `simulate_stage3.lua` 12/12. **Pendiente de pulido visual del mapa** (el usuario puede refinarlo en Tiled). |
-| 7.3 | **Batalla contra el Profesor Oak** | [mod/fuente] | PENDIENTE (diseño recibido) | Cadena de pistas de post-game: Pokédex 150 + Liga → rival en el lab → Bill → Lab. Isla Canela → Lance (Liga cerrada) → Ruta 1 → Oak revela que fue campeón → batalla → créditos → mundo vuelve a la normalidad. Diseño completo (13 secciones, diálogos literales) → `docs/oak-event-design.md`. El equipo de Oak ya existe en los datos originales (contenido "cortado"). Implementar como mod propio estilo `mew_event`. |
+| 7.3 | **Batalla contra el Profesor Oak** | [mod] `oak_event` | LISTO-PARA-REVISAR | Mod nuevo `mods/oak_event` que envuelve el combate cortado `OPP_PROF_OAK` (3 equipos por starter, `assets/generated/battle/trainers/prof.oak.png`) en el evento del usuario. Gate: `EVENT_BEAT_CHAMPION_RIVAL` + 150 registrados + no `EVENT_BEAT_PROF_OAK`. Cadena: rival en el lab (Oak ausente) -> Bill (override de `TEXT_BILLSHOUSE_BILL_SS_TICKET`, vanilla reinsertado) -> cientifico de Isla Canela (`CINNABAR_LAB_METRONOME_ROOM` scientist 2) -> Lance en la Meseta con la Liga bloqueada por `onStep` -> Oak en la Ruta 1 (14,30): revelacion completa -> `start_battle trainer OPP_PROF_OAK` -> al ganar `EVENT_BEAT_PROF_OAK` + `record_hall_of_fame` (creditos + cura + habitacion + guardado + reset al titulo). El mundo se revierte solo al fijarse el flag. Test 24/24, `simulate_oak.lua` 22/22. |
 
 ## 7bis. Idiomas
 
@@ -155,14 +155,13 @@ Catálogo — decidir cuáles activar por defecto:
 ## Pendiente
 
 ### De mí (implementar)
-1. **§7.3** — batalla contra Oak: diseño en `docs/oak-event-design.md`, sin empezar. Es la
-   pieza grande que queda de contenido nuevo.
-2. **§7.2** — pulido visual del mapa de la Isla Suprema (cuando el usuario lo edite en Tiled
+1. **§7.2** — pulido visual del mapa de la Isla Suprema (cuando el usuario lo edite en Tiled
    y me pase el export) + integrar ese export en `mods/mew_event/data/isla_suprema.lua`.
 
 ### De vos (decisión / prueba)
-3. **§7.2 / §7.3** — playtest real en el juego: Mansión → Fuji → marinero → isla → Mew.
-4. **§7.1** — qué eventos nuevos querés además de Mew y Oak.
+2. **§7.2 / §7.3** — playtest real en el juego: (Mew) Mansión → Fuji → marinero → isla → Mew;
+   (Oak) lab/rival → Bill → Isla Canela → Lance → Ruta 1 → combate → créditos.
+3. **§7.1** — qué eventos nuevos querés además de Mew y Oak.
 5. **§7b.4** — guion narrativo en español: traducción propia / MT de borrador / dejarlo en inglés.
 6. **§6.1** — probar el modo LAN con 2 instancias.
 7. **§1.1** — navegación del menú de ataques en widescreen (quedó en grid; ajuste cosmético).
