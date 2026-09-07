@@ -245,11 +245,10 @@ return function(mod)
     fn = function(ctx)
       if ctx.save.flags[DISCOVERED] then return end
       require("src.script.Flags").set(ctx.save, DISCOVERED)
-      ctx.runner:run({
-        { "show_text", "...\fMew. El ADN. MEWTWO.\fLa firma \"F.\"" },
-        { "show_text", "El que escribió esto\nse marchó a cuidar\fPOKéMON..." },
-        { "show_text", "Creo que sé quién\nfue." },
-      }, {})
+      local C = require("src.script.Commands")
+      C.show_text(ctx, "...\fMew. El ADN.\nMEWTWO.\fLa firma \"F.\"")
+      C.show_text(ctx, "El que escribió\nesto se marchó a\fcuidar POKéMON...")
+      C.show_text(ctx, "Creo que sé quién\nfue.")
     end,
   })
 end
