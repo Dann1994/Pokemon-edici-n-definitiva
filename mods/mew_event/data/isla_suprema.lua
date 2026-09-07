@@ -6,10 +6,14 @@
 -- clearing at the top with the ancient statue.
 --
 -- 8 x 13 blocks (16 x 26 cells).  Block ids, confirmed against the
--- vanilla OVERWORLD tileset / PALLET_TOWN / VERMILION_CITY:
---   15 tree wall (solid)   1 open ground        10 dirt path
---   11 tall grass (deco)   84 dock planks       67 sea (border)
-local T, G, P, g, D, W = 15, 1, 10, 11, 84, 67
+-- vanilla OVERWORLD tileset by rendering the atlas:
+--   15 tree wall (solid)   1 open ground (walkable, this is the path too)
+--   10 tall grass (deco, no encounters registered)   84 dock planks
+--   67 sea (border)
+-- The layout is deliberately plain -- geometry and collision are right,
+-- the texturing is a first pass to refine in Tiled
+-- (scripts/tiled_export_mew_event.py).
+local T, G, g, D, W = 15, 1, 10, 84, 67
 
 return {
   id = "ISLA_SUPREMA",
@@ -23,16 +27,16 @@ return {
   blocks = {
     T, T, T, T, T, T, T, T,   -- 0  north tree wall
     T, G, G, G, G, G, G, T,   -- 1  clearing (statue at cell 6,3)
-    T, G, G, P, G, G, G, T,   -- 2
-    T, G, G, P, G, G, G, T,   -- 3
-    T, T, G, P, G, T, T, T,   -- 4  forest narrows
-    T, g, G, P, G, g, G, T,   -- 5  forest
-    T, G, G, P, G, G, g, T,   -- 6
-    T, G, G, P, G, G, G, T,   -- 7
-    T, T, G, P, G, T, T, T,   -- 8  forest entrance (the "F." sign is at 5,18)
-    T, G, G, P, G, G, G, T,   -- 9  coast clearing
-    T, G, G, P, G, G, G, T,   -- 10
-    T, G, G, P, G, G, G, T,   -- 11
+    T, G, g, G, G, g, G, T,   -- 2
+    T, G, G, G, G, G, G, T,   -- 3
+    T, T, G, G, G, T, T, T,   -- 4  forest narrows
+    T, g, G, G, G, g, G, T,   -- 5  forest
+    T, G, G, G, G, G, g, T,   -- 6
+    T, G, g, G, G, G, G, T,   -- 7
+    T, T, G, G, G, T, T, T,   -- 8  forest entrance (the "F." sign is at 5,18)
+    T, G, G, G, G, G, G, T,   -- 9  coast clearing
+    T, G, G, G, G, G, G, T,   -- 10
+    T, G, G, G, G, G, G, T,   -- 11
     W, W, D, D, D, W, W, W,   -- 12 the dock
   },
   connections = {},
