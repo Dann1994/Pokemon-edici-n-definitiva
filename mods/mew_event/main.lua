@@ -1,15 +1,20 @@
--- mew_event -- Stage 1: Pokemon Mansion 3F (the scientist + the F. documents)
---
--- See DESIGN.md (narrative) and PLAN.md (engine mapping). Stages 2-5
--- (Fuji / Mapa Viejo / Isla Suprema / Mew) are not implemented yet.
+-- mew_event -- the secret post-game Mew quest (DESIGN.md / PLAN.md).
+--   Stage 1  Pokemon Mansion 3F: the scientist + the six "F." documents
+--   Stage 2  Mr. Fuji's house, Lavender Town: the evasive talk, the
+--            condition, the revelation ("Yo soy F.") and the MAPA VIEJO
+-- Stages 3-5 (Vermilion sailor / Isla Suprema map / Mew) are still to do.
 
 local MANSION = "POKEMON_MANSION_3F"
+local FUJI_HOUSE = "MR_FUJIS_HOUSE"
 
 -- flags (MOD_ prefix per the project convention)
 local FLED       = "MOD_MEW_SCIENTIST_FLED"
 local DISCOVERED = "MOD_MEW_DISCOVERED"
 local DOC_FLAG   = { "MOD_MEW_DOC1", "MOD_MEW_DOC2", "MOD_MEW_DOC3",
                      "MOD_MEW_DOC4", "MOD_MEW_DOC5", "MOD_MEW_DOC6" }
+local FUJI_MYSTERY = "MOD_MEW_FUJI_MYSTERY"  -- 1st Fuji talk done
+local OLD_MAP      = "MOD_MEW_OLD_MAP"       -- Fuji handed over the map
+local MAPA_VIEJO   = "MAPA_VIEJO"            -- the key item
 
 -- new objects added to Mansion 3F, hidden until the event runs. The two
 -- extra "papeles" sit in the same lower-left room as the vanilla diary.
@@ -250,5 +255,112 @@ return function(mod)
       C.show_text(ctx, "El que escribió\nesto se marchó a\fcuidar POKéMON...")
       C.show_text(ctx, "Creo que sé quién\nfue.")
     end,
+  })
+
+  -- ================================================================
+  --  Stage 2 -- Mr. Fuji's house (Lavender Town)
+  -- ================================================================
+
+  -- the MAPA VIEJO key item (like every vanilla key item: price 0,
+  -- keyItem, not tossable)
+  mod.content.items:register(MAPA_VIEJO, {
+    id = MAPA_VIEJO, name = "MAPA VIEJO", price = 0,
+    keyItem = true, tossable = false,
+  })
+
+  mod.content.map_scripts:register(FUJI_HOUSE, {
+    talk = {
+      TEXT_MRFUJISHOUSE_MR_FUJI = {
+        -- gate the whole quest branch behind Stage 1
+        { "check_flag", DISCOVERED }, { "jump_if_false", "vanilla" },
+
+        -- already has the map: a short send-off
+        { "check_flag", OLD_MAP }, { "jump_if_false", "no_map_yet" },
+        { "show_text", "El MAPA VIEJO\nseñala una isla\fmuy lejana." },
+        { "show_text", "Quizás alguien\nacostumbrado al\fmar sepa cómo\nllegar hasta\fallí." },
+        { "jump", "end" },
+
+        { "label", "no_map_yet" },
+        -- first talk done? -> check the condition for the second talk
+        { "check_flag", FUJI_MYSTERY }, { "jump_if_false", "first_talk" },
+        { "check_dex_owned", 150 }, { "jump_if_false", "not_yet" },
+        { "mew_event:party_has", "MEWTWO" }, { "jump_if_false", "not_yet" },
+        { "jump", "second_talk" },
+
+        -- --- first conversation: evasive -----------------------------
+        { "label", "first_talk" },
+        { "face_player" },
+        { "show_text", "¿F...?\fNo sé de quién\nme hablas." },
+        { "show_text", "Hay cosas del\npasado que es\fmejor dejar\natrás." },
+        { "show_text", "Hace muchos años\nviajé a lugares\fmuy lejanos.\fPero eso ya\npertenece al\fpasado." },
+        { "show_text", "...Existe una isla\nque no aparece en\flos mapas que\nconocen los\fentrenadores." },
+        { "show_text", "Allí encontré algo\nque cambió mi\fvida." },
+        { "show_text", "Desde entonces he\nintentado olvidar\faquel lugar." },
+        { "show_text", "¿Mew?\fNo.\fDe eso no puedo\nhablar." },
+        { "show_text", "Hay cosas que un\nhombre debe\faprender a dejar\natrás." },
+        { "show_text", "Sólo confiaría ese\nlugar a alguien\fque comprendiera\nlo que yo no\fcomprendí\nentonces." },
+        { "show_text", "Alguien que no vea\na los POKéMON como\fsimples criaturas\nque coleccionar." },
+        { "show_text", "Alguien cuyo deseo\nde conocerlos a\ftodos nazca del\nrespeto, y no de\fla ambición." },
+        { "show_text", "Si algún día\nconozco a una\fpersona así...\fquizás pueda\nconfiarle lo que\fjuré ocultar." },
+        { "set_flag", FUJI_MYSTERY },
+        { "jump", "end" },
+
+        -- --- condition not met yet ---------------------------------
+        { "label", "not_yet" },
+        { "face_player" },
+        { "show_text", "Aún no.\fVuelve cuando los\nhayas conocido a\ftodos, uno por\funo..." },
+        { "show_text", "...y cuando ese\nPOKéMON siga a tu\flado por voluntad\npropia." },
+        { "jump", "end" },
+
+        -- --- second conversation: recognition + revelation ----------
+        { "label", "second_talk" },
+        { "face_player" },
+        { "show_text", "Mewtwo..." },
+        { "show_text", "Así que finalmente\nte encontró." },
+        { "show_text", "Durante tantos\naños me pregunté\fqué habría sido\nde él." },
+        { "show_text", "Los has conocido a\ntodos. Uno por\nuno." },
+        { "show_text", "Los has buscado en\ncada rincón de\fKANTO." },
+        { "show_text", "Y aun así...\fhas conseguido\nalgo que nosotros\fnunca pudimos." },
+        { "show_text", "Has conseguido que\nMewtwo encuentre\fsu propio camino." },
+        { "show_text", "Ya no tiene\nsentido seguir\focultándolo." },
+        { "show_text", "Sí.\fYo soy F." },
+        { "show_text", "Yo estuve allí.\fYo encontré a Mew." },
+        { "show_text", "Nunca revelé dónde\nestaba. Y jamás lo\fharé." },
+        { "show_text", "Durante todos\nestos años guardé\fel secreto." },
+        { "show_text", "No porque quisiera\nregresar." },
+        { "show_text", "Sino porque temía\nque alguien\fvolviera a\nbuscarlo." },
+        { "show_text", "Durante todos\nestos años también\fguardé este mapa." },
+        { "give_item", MAPA_VIEJO, 1, "Recibiste el\nMAPA VIEJO." },
+        { "show_text", "Ahora creo que\npuedo confiar en\fti." },
+        { "show_text", "Si decides ir,\nrecuerda esto." },
+        { "show_text", "No vayas a buscar\nun trofeo." },
+        { "show_text", "Ve a conocer al\nPOKéMON que una\fvez tuve el\nprivilegio de\fconocer." },
+        { "set_flag", OLD_MAP },
+        { "jump", "end" },
+
+        -- --- pre-Stage-1: the vanilla conversation, inlined ---------
+        -- talk dispatch is single-winner, so this override replaces the
+        -- engine rows outright; these mirror data/scripts/story.lua
+        -- M.MR_FUJIS_HOUSE (flute give-then-print, then the has-it and
+        -- pre-rescue lines).
+        { "label", "vanilla" },
+        { "face_player" },
+        { "check_flag", "EVENT_GOT_POKE_FLUTE" }, { "jump_if_true", "v_flute_done" },
+        { "check_flag", "EVENT_RESCUED_MR_FUJI" }, { "jump_if_false", "v_no_rescue" },
+        { "show_text", "_MrFujisHouseMrFujiIThinkThisMayHelpYourQuestText" },
+        { "give_item", "POKE_FLUTE", 1, false },
+        { "show_text", "_MrFujisHouseMrFujiReceivedPokeFluteText" },
+        { "set_flag", "EVENT_GOT_POKE_FLUTE" },
+        { "show_text", "_MrFujisHouseMrFujiPokeFluteExplanationText" },
+        { "jump", "end" },
+        { "label", "v_flute_done" },
+        { "show_text", "_MrFujisHouseMrFujiHasMyFluteHelpedYouText" },
+        { "jump", "end" },
+        { "label", "v_no_rescue" },
+        { "show_text", "_MrFujisHouseMrFujiPokedexText" },
+
+        { "label", "end" },
+      },
+    },
   })
 end

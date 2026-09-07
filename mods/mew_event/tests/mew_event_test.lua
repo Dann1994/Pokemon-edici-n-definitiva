@@ -5,6 +5,7 @@ if not _G.love then _G.love = require("tests.love_stub") end
 local T = require("tests.modkit")
 local Data = require("src.core.Data")
 Data:load()
+require("data.scripts.init")   -- attach the engine's base map scripts
 
 local run = T.sdk.loadMods({ "mods/es_es", "mods/mew_event" }, { data = Data })
 T.eq(#run.errors, 0, "mew_event loads clean (" .. tostring(run.errors[1]) .. ")")
@@ -62,6 +63,20 @@ do
   local c = ctx(gated)
   Data.commands["mew_event:stage_a"].fn(c)
   T.eq(c.lastCheck, true, "stage_a: true after league + Mewtwo caught + in party")
+end
+
+-- Stage 2: the MAPA VIEJO key item + Fuji's overridden conversation
+do
+  local def = Data.items.MAPA_VIEJO
+  T.check(def ~= nil and def.keyItem == true and def.tossable == false,
+    "MAPA_VIEJO registered as a non-tossable key item")
+  local fuji = Data.map_scripts.MR_FUJIS_HOUSE
+  T.check(fuji ~= nil, "MR_FUJIS_HOUSE map script registered")
+  local talk = require("src.script.MapScripts").get("MR_FUJIS_HOUSE").talk
+  T.check(talk.TEXT_MRFUJISHOUSE_MR_FUJI ~= nil, "Fuji talk override present")
+  T.check(require("src.script.MapScripts").baseTalk(
+    "MR_FUJIS_HOUSE", "TEXT_MRFUJISHOUSE_MR_FUJI") ~= nil,
+    "vanilla Fuji handler still reachable behind the override")
 end
 
 run.release()
