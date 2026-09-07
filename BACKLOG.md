@@ -108,7 +108,7 @@ Catálogo — decidir cuáles activar por defecto:
 | # | Cambio | Vía | Estado | Notas |
 |---|---|---|---|---|
 | 7.1 | Agregar eventos nuevos | [mod] `map_scripts` + VM `src/script/` | PENDIENTE | La VM de scripting está entera (`Commands.lua`, `ScriptRunner.lua`, `Flags.lua`); scripts a mano en `data/scripts/`. Mod de ejemplo: `example_lost_parcel` (quest + NPC + diálogo). Esperando qué eventos. |
-| 7.2 | **Captura de Mew** | [mod] | NECESITA-DECISIÓN | El usuario pasará un documento con el diseño. `example_mew_starter` ya muestra cómo inyectar Mew en el guion de Oak's Lab. |
+| 7.2 | **Captura de Mew — evento "Isla del Sur"** | [mod] `mew_event` | EN CURSO | Diseño recibido → `mods/mew_event/DESIGN.md`. Análisis del motor + plan técnico → `mods/mew_event/PLAN.md`. Todo mapeado a la API existente (verbos `static_battle`, `check_dex_owned`, `map_scripts`, `maps:register/patch`, `items:register`, override del marinero de Carmín). **7 decisiones abiertas** en PLAN.md antes de codificar (tamaño de la isla, nivel de Mew, encuentros, música…). |
 | 7.3 | **Batalla contra el Profesor Oak** | [mod/fuente] | PENDIENTE | El equipo de Oak existe en los datos del juego original pero nunca se usa. Se puede añadir como trainer + script de evento. Referencia: es un contenido "cortado" bien documentado. |
 
 ## 7bis. Idiomas
