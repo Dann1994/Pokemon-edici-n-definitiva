@@ -14,8 +14,8 @@ del diseño (`DESIGN.md`) a la API existente. **Nada de sistemas nuevos.**
 | NPC condicional (científico) | objeto nuevo con `hidden = true` en `POKEMON_MANSION_3F` vía `maps:patch`; `onEnter` llama `show_object` cuando se cumple la Etapa A; `hide_object` cuando huye. Patrón: `data/scripts/celadon_eevee.lua`, `hideBeatenSnorlax`. |
 | "¿Tiene Mewtwo en el equipo?" | verbo propio `mew_event:party_has MEWTWO` (registrado con `mod.content.commands:register`) que lee `ctx.save.party` y pone `ctx.lastCheck`. No hay verbo nativo. |
 | "150 de Kanto registrados" | verbo nativo **`check_dex_owned 150`** — cuenta `save.pokedex.owned`. |
-| Viaje por barco | override de `TEXT_VERMILIONCITY_SAILOR1` (hoy en `data/scripts/story.lua`): si `check_item MAPA_VIEJO` y flag `SOUTH_ISLAND_UNLOCKED` → `warp` a la isla. |
-| Mapa nuevo (Isla del Sur) | `mod.content.maps:register("SOUTH_ISLAND_*", { id, label, tileset, width, height, blocks, borderBlock, warps, objects, signs })` (patrón de `example_mini_conversion`). `warps` de ida (barco) y vuelta. |
+| Viaje por barco | override de `TEXT_VERMILIONCITY_SAILOR1` (hoy en `data/scripts/story.lua`): si `check_item MAPA_VIEJO` y flag `ISLA_SUPREMA_UNLOCKED` → `warp` a la isla. |
+| Mapa nuevo (Isla Suprema) | `mod.content.maps:register("ISLA_SUPREMA_*", { id, label, tileset, width, height, blocks, borderBlock, warps, objects, signs })` (patrón de `example_mini_conversion`). `warps` de ida (barco) y vuelta. |
 | Encuentros salvajes de la isla | `mod.content.encounters:register(MAP, { grass = { rate, slots = {...} } })` |
 | Estatua / pistas en el bosque | objetos nuevos + `talk` handler; `onEnter`/`scripts` paralelos con `emote`/`wait`/`hide_object` para las "pistas". |
 | Combate único contra Mew | verbo nativo **`static_battle "MEW" <nivel> "MOD_MEW_CAPTURED"`** — corre `start_battle "wild"`, y si no pierdes: pone el flag y oculta el objeto. `check_battle_result "win" "run"` separa capturado / derrotado. |
@@ -32,7 +32,7 @@ leer documentos (6) → set MOD_MEW_DISCOVERED
 Fuji 1ª charla (evasiva) → set MOD_MEW_FUJI_MYSTERY
         (condición: check_dex_owned 150 ∧ party_has MEWTWO)
 Fuji 2ª charla → revela "soy F." → give_item MAPA_VIEJO → set MOD_MEW_OLD_MAP
-marinero Carmín + MAPA_VIEJO → set MOD_MEW_SOUTH_ISLAND → warp SOUTH_ISLAND
+marinero Carmín + MAPA_VIEJO → set MOD_MEW_ISLA_SUPREMA → warp ISLA_SUPREMA
 estatua 1ª vez → texto ; 2ª vez → play_cry + static_battle MEW → MOD_MEW_CAPTURED
 ```
 
@@ -52,7 +52,7 @@ estatua 1ª vez → texto ; 2ª vez → play_cry + static_battle MEW → MOD_MEW
 
 ## Decisiones abiertas (necesito tu OK antes de codificar)
 
-1. **Isla del Sur — tamaño/forma.** Propuesta: ~2–3 pantallas. Costa (warp del
+1. **Isla Suprema — tamaño/forma.** Propuesta: ~2–3 pantallas. Costa (warp del
    barco) → claro con el cartel "— F." → bosque corto y lineal → claro final
    con la estatua y unas ruinas. Tileset `OVERWORLD` (tiene césped, árboles,
    agua, flores, estatua). ¿OK o querés algo distinto?

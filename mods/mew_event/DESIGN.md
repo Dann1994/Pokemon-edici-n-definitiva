@@ -1,4 +1,4 @@
-# Evento secreto de Mew — Isla del Sur
+# Evento secreto de Mew — Isla Suprema
 
 Documento de diseño del usuario (post-game quest para el fork pokered-plus).
 Filosofía: contenido "perdido" de Gen 1. Misterio → descubrimiento → culpa →
@@ -6,7 +6,7 @@ redención → legado → encuentro. Frases cortas, estilo Game Boy. La identida
 de **"F."** se deduce antes de confirmarse (F. = Sr. Fuji).
 
 Cadena de lore que conecta: Mansión Pokémon · origen de Mewtwo · pasado de
-Fuji · expedición a Sudamérica · Isla del Sur · cartel firmado "F." · Fuji y
+Fuji · expedición a Sudamérica · Isla Suprema · cartel firmado "F." · Fuji y
 Mew · Fuji abandona por culpa · el amor por los Pokémon como requisito del
 Mapa Viejo.
 
@@ -25,7 +25,7 @@ Liga → capturar Mewtwo → Mewtwo en el equipo → Mansión Pokémon 3F
 → registrar los 150 de Kanto + Mewtwo en el equipo
 → volver con Fuji → reconoce a Mewtwo (sorpresa, no miedo) → revela que es F.
 → entrega el MAPA VIEJO
-→ Ciudad Carmín: mostrar el mapa al marinero → viaje a la Isla del Sur
+→ Ciudad Carmín: mostrar el mapa al marinero → viaje a la Isla Suprema
 → cartel firmado "F." → bosque (pistas de Mew) → estatua → interactuar
 → combate único contra Mew → captura
 ```
@@ -152,9 +152,9 @@ Al mostrarle el Mapa Viejo:
 > "¿Qué es esto?" / "Hace muchos años que no veía uno de estos." / "¿Quieres ir
 > allí?" / "No sé qué encontrarás..." / "Pero si el viejo Fuji te entregó ese
 > mapa, supongo que tendrá sus razones."
-Permite viajar a la Isla del Sur. No menciona a Mew.
+Permite viajar a la Isla Suprema. No menciona a Mew.
 
-## 5. Isla del Sur (mapa nuevo)
+## 5. Isla Suprema (mapa nuevo)
 
 Estética Gen 1, pequeña, remota, casi olvidada. Costa de entrada · bosque ·
 zonas abiertas · vegetación · pequeñas ruinas · una estatua · caminos
@@ -190,7 +190,7 @@ Luego: música + transición + encuentro único.
 ## Flags (conceptuales — usar el sistema existente, prefijo `MOD_`)
 
 `MEW_EVENT_DISCOVERED` (documentos leídos) · `FUJI_MYSTERY_ACTIVE` (Fuji
-reconoció la investigación) · `OLD_MAP_OBTAINED` · `SOUTH_ISLAND_UNLOCKED` ·
+reconoció la investigación) · `OLD_MAP_OBTAINED` · `ISLA_SUPREMA_UNLOCKED` ·
 `MEW_ENCOUNTER_DEFEATED` (si hace falta distinguir) · `MEW_CAPTURED`.
 
 ## Reglas de implementación
