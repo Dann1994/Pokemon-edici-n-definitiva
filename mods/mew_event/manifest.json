@@ -1,18 +1,19 @@
 {
   "id": "mew_event",
-  "name": "Isla del Sur (evento de Mew)",
-  "version": "0.0.1",
+  "name": "Isla Suprema (evento de Mew)",
+  "version": "0.1.0",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
   "game_version": ">=0.0.0-0 <2.0.0",
   "category": "QUEST",
   "priority": 100,
+  "permissions": ["engine_internals"],
   "dependencies": [],
-  "optional_dependencies": [],
+  "optional_dependencies": ["es_es"],
   "conflicts": [],
   "incompatible": [],
   "games": ["gen1"],
-  "experimental": true,
-  "description": "Evento secreto de post-game: la investigacion perdida de la Mansion Pokemon, el pasado del Sr. Fuji y el viaje a la Isla del Sur para encontrar a Mew. Diseno en DESIGN.md, plan en PLAN.md. Sin implementar todavia."
+  "experimental": false,
+  "description": "Evento secreto de post-game: la investigacion perdida de la Mansion Pokemon, el pasado del Sr. Fuji y el viaje a la Isla Suprema para encontrar a Mew. Diseno en DESIGN.md. En construccion (Etapa 1: Mansion)."
 }
