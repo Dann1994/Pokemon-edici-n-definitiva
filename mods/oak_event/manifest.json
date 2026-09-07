@@ -1,0 +1,19 @@
+{
+  "id": "oak_event",
+  "name": "El desafio del Profesor Oak",
+  "version": "0.1.0",
+  "api": 2,
+  "entry": "main.lua",
+  "profile": "content",
+  "game_version": ">=0.0.0-0 <2.0.0",
+  "category": "QUEST",
+  "priority": 100,
+  "permissions": ["engine_internals"],
+  "dependencies": [],
+  "optional_dependencies": ["es_es"],
+  "conflicts": [],
+  "incompatible": [],
+  "games": ["gen1"],
+  "experimental": false,
+  "description": "Evento secreto de post-game: con la Pokedex de Kanto completa y la Liga vencida, una cadena de pistas (el rival, Bill, el laboratorio de Isla Canela, Lance) lleva hasta el Profesor Oak en la Ruta 1, que revela que fue campeon y te reta a un combate. Termina con los creditos. Diseno en DESIGN.md."
+}
