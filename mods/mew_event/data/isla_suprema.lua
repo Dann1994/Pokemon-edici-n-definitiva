@@ -16,6 +16,7 @@ return {
   label = "IslaSuprema",
   index = 1000,
   tileset = "OVERWORLD",
+  palette = "VIRIDIAN",   -- forest greens (beats the vanilla cascade)
   width = 8,
   height = 13,
   borderBlock = W,
