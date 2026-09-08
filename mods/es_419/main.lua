@@ -41,16 +41,10 @@ return function(mod)
   end
 
   -- ---- glyphs -------------------------------------------------------
-  -- Text rendering through the bundled Plain Pixel TTF ("Plain Pixel
-  -- Font" by Douglas Vautour (Burpy Fresh), CC-BY 4.0 -- see
-  -- assets/fonts/plainpixel/README.md).  Registered, it replaces the tile
-  -- font for ordinary characters, so a translation needs no glyph sheet
-  -- at all; box borders and <PK>-style macros keep their tiles.  Options:
-  -- { file = mod.assets:path("myfont.ttf"), size = 15, spacing = 0,
-  --   yOffset = -6, bold = true } -- size is the font's design em (Plain
-  -- Pixel only rasterizes cleanly at multiples of 15), bold thickens a
-  -- 1px-stroke font that reads too light.
-  -- es_ES (loaded first as a dependency) already registers the TTF font.
+  -- es_ES (loaded first as a dependency) registers the Spanish accent
+  -- glyph page (assets/font/accents.png) over the ROM tile font, so this
+  -- mod ships no font of its own.  Anything under lang/font.lua /
+  -- lang/charmap.lua here still layers on top if you add it.
 
   -- Register the sheet BEFORE anything asks for a glyph on it.  base is
   -- the first code the page owns; 0x100 and up is free space above the

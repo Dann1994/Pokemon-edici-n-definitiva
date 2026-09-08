@@ -116,12 +116,21 @@ return function(mod)
   mod.content.map_scripts:register(LAB, {
     onEnter = function(game, ow)
       local ctx = ctxFor(game, ow)
+      -- the vanilla pre-starter rival (OAKSLAB_RIVAL, object index 1) is
+      -- long gone by the post-game -- but its object toggle only got set
+      -- to false when the player battled it; a synthetic/edited save that
+      -- just sets the flags leaves it on the map data's default (visible),
+      -- so it shows up next to our event rival.  Keep it hidden whenever
+      -- our event owns the lab, and leave it hidden afterwards (that IS
+      -- its normal post-game state).
       if huntActive(game.save) then
+        C.hide_object(ctx, LAB, "OAKSLAB_RIVAL")
         C.hide_object(ctx, LAB, "OAKSLAB_OAK1")
         C.hide_object(ctx, LAB, "OAKSLAB_OAK2")
         C.show_object(ctx, LAB, RIVAL)
       elseif game.save.flags[BEATEN] then
         C.hide_object(ctx, LAB, RIVAL)
+        C.hide_object(ctx, LAB, "OAKSLAB_RIVAL")
         C.show_object(ctx, LAB, "OAKSLAB_OAK1")
       end
     end,

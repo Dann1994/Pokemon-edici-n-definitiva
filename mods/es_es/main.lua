@@ -50,7 +50,33 @@ return function(mod)
   --   yOffset = -6, bold = true } -- size is the font's design em (Plain
   -- Pixel only rasterizes cleanly at multiples of 15), bold thickens a
   -- 1px-stroke font that reads too light.
-  mod.content.font:register("ttf", {})
+  -- Spanish accents as an 8px glyph page LAYERED on the ROM tile font, so
+  -- ordinary text keeps the native Game Boy size.  The bundled Plain Pixel
+  -- TTF (register("ttf", {})) is the alternative, but its glyphs are ~1.5x
+  -- taller than the tile font and read as oversized in the text box.
+  -- "e" acute (é, code 186) and the ellipsis already have ROM tiles.
+  mod.content.font:register("es_accents", {
+    image = mod.assets:path("assets/font/accents.png"),
+    base = 0x100,
+    glyphsPerRow = 16,
+    charmap = {
+      { code = 0x100, seq = "\195\161" }, -- á
+      { code = 0x101, seq = "\195\173" }, -- í
+      { code = 0x102, seq = "\195\179" }, -- ó
+      { code = 0x103, seq = "\195\186" }, -- ú
+      { code = 0x104, seq = "\195\188" }, -- ü
+      { code = 0x105, seq = "\195\177" }, -- ñ
+      { code = 0x106, seq = "\194\191" }, -- ¿
+      { code = 0x107, seq = "\194\161" }, -- ¡
+      { code = 0x108, seq = "\195\129" }, -- Á
+      { code = 0x109, seq = "\195\137" }, -- É
+      { code = 0x10A, seq = "\195\141" }, -- Í
+      { code = 0x10B, seq = "\195\147" }, -- Ó
+      { code = 0x10C, seq = "\195\154" }, -- Ú
+      { code = 0x10D, seq = "\195\145" }, -- Ñ
+      { code = 0x10E, seq = "\194\170" }, -- ª
+    },
+  })
 
   -- Register the sheet BEFORE anything asks for a glyph on it.  base is
   -- the first code the page owns; 0x100 and up is free space above the
