@@ -9,11 +9,11 @@
 -- vanilla OVERWORLD tileset by rendering the atlas:
 --   15 tree wall (solid)   1 open ground (walkable, this is the path too)
 --   10 tall grass (deco, no encounters registered)   84 dock planks
---   67 sea (border)
+--   67 sea (border)   8 route sign post (post = the block's SE cell, 5,17)
 -- The layout is deliberately plain -- geometry and collision are right,
 -- the texturing is a first pass to refine in Tiled
 -- (scripts/tiled_export_mew_event.py).
-local T, G, g, D, W = 15, 1, 10, 84, 67
+local T, G, g, D, W, S = 15, 1, 10, 84, 67, 8
 
 return {
   id = "ISLA_SUPREMA",
@@ -33,7 +33,7 @@ return {
     T, g, G, G, G, g, G, T,   -- 5  forest
     T, G, G, G, G, G, g, T,   -- 6
     T, G, g, G, G, G, G, T,   -- 7
-    T, T, G, G, G, T, T, T,   -- 8  forest entrance (the "F." sign is at 5,18)
+    T, T, S, G, G, T, T, T,   -- 8  forest entrance -- route sign post at (5,17)
     T, G, G, G, G, G, G, T,   -- 9  coast clearing
     T, G, G, G, G, G, G, T,   -- 10
     T, G, G, G, G, G, G, T,   -- 11
@@ -50,6 +50,6 @@ return {
       text = "TEXT_ISLA_SUPREMA_STATUE" },
   },
   signs = {
-    { text = "TEXT_ISLA_SUPREMA_SIGN", x = 5, y = 18 },
+    { text = "TEXT_ISLA_SUPREMA_SIGN", x = 5, y = 17 },
   },
 }

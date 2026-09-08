@@ -95,13 +95,17 @@ return function(mod)
     objects[#objects + 1] = o
     return o
   end
+  -- the scientist starts across the room by the diary ("reading"); the
+  -- stair the player climbs up onto 3F is at (7,10)
   add({ name = SCIENTIST, sprite = "SPRITE_SCIENTIST", movement = "STAY",
-        range = "NONE", x = 8, y = 10, text = "TEXT_MEW_EVENT_SCIENTIST" })
+        range = "NONE", x = 5, y = 12, text = "TEXT_MEW_EVENT_SCIENTIST" })
   add({ name = PAPERS_B, sprite = "SPRITE_POKEDEX", movement = "STAY",
         range = "NONE", x = 4, y = 11, text = "TEXT_MEW_EVENT_PAPERS_B" })
   add({ name = PAPERS_C, sprite = "SPRITE_POKEDEX", movement = "STAY",
         range = "NONE", x = 8, y = 11, text = "TEXT_MEW_EVENT_PAPERS_C" })
   mod.content.maps:patch(MANSION, { objects = objects })
+
+  local STAIR_X, STAIR_Y = 7, 10   -- POKEMON_MANSION_2F warp 2 -> here
 
   -- ---- the map script ---------------------------------------------
   local function showPapers(game, ow)
@@ -130,7 +134,9 @@ return function(mod)
       end
     end,
 
-    -- the scientist notices the player crossing into the diary room
+    -- the scientist notices the player the moment they climb the stairs
+    -- into his room: "!" over his head, he walks over, panics at MEWTWO,
+    -- then hurries to the stairs and is gone.
     onStep = function(game, ow, x, y)
       local f = game.save.flags or {}
       if f[FLED] then return false end
@@ -143,21 +149,31 @@ return function(mod)
         if mon.species == "MEWTWO" then hasMewtwo = true break end
       end
       if not hasMewtwo then return false end
-      if y > 11 or x < 3 or x > 9 then return false end
+      -- the scientist's room around the stair
+      if y < 10 or y > 12 or x < 4 or x > 9 then return false end
 
       local sci = ow.npcByName and ow:npcByName(SCIENTIST)
+      local sciIndex = sci and sci.def and sci.def.index
+      local px, py = ow.player.cellX, ow.player.cellY
+      -- a free cell next to the player for the scientist to stop at
+      local tx, ty = px, py + 1
+      if py + 1 > 12 then tx, ty = px, py - 1 end
+
       ow.runner:run({
-        { "mew_event:approach" },
+        { "mew_event:begin" },                    -- FLED + papers on, now
+        sciIndex and { "emote", sciIndex, "shock", 40 } or { "wait", 1 },
+        sciIndex and { "move_npc_to", sciIndex, tx, ty } or { "wait", 1 },
         { "face_player" },
         { "show_text", "¡Espera! Llevo días\nleyendo estos\fpapeles viejos..." },
         { "show_text", "Nadie recuerda ya\nqué se investigaba\faquí." },
         { "show_text", "¿Q-qué es ese\nPOKéMON que va\fcontigo...?" },
-        { "emote", sci and "npc" or "player", "shock", 40 },
+        sciIndex and { "emote", sciIndex, "shock", 40 } or { "wait", 1 },
         { "show_text", "No..." },
         { "show_text", "¡Es imposible!\fMEWTWO." },
         { "show_text", "¡¿Cómo lo has\nconseguido?!\f¡No debería\nexistir!" },
         { "show_text", "¡Tengo que salir\nde aquí!" },
-        { "mew_event:flee" },
+        sciIndex and { "move_npc_to", sciIndex, STAIR_X, STAIR_Y } or { "wait", 1 },
+        { "mew_event:vanish" },
       }, { npc = sci })
       return true
     end,
@@ -165,9 +181,13 @@ return function(mod)
     scripts = {},
 
     talk = {
+      -- fallback if the player reaches him without the onStep scene
       TEXT_MEW_EVENT_SCIENTIST = {
-        { "show_text", "¡No! ¡Aléjate de\nmí con eso!" },
-        { "mew_event:flee" },
+        { "face_player" },
+        { "mew_event:begin" },
+        { "show_text", "¿Q-qué es ese\nPOKéMON...?\f¡MEWTWO!" },
+        { "show_text", "¡No debería\nexistir!\f¡Tengo que salir\nde aquí!" },
+        { "mew_event:vanish" },
       },
       TEXT_MEW_EVENT_PAPERS_B = {
         { "check_flag", FLED }, { "jump_if_false", "sealed" },
@@ -227,26 +247,23 @@ return function(mod)
       ctx.runner:yield()
     end,
   })
-  mod.content.commands:register("mew_event:approach", {
-    foreground = true,
-    fn = function(ctx)
-      local ow = ctx.overworld
-      local sci = ow and ow.npcByName and ow:npcByName(SCIENTIST)
-      local p = ow and ow.player
-      if sci and p then
-        require("src.script.Commands").move_npc_to(ctx, sci.def.index,
-          p.cellX, p.cellY + 1)
-      end
-    end,
-  })
-  mod.content.commands:register("mew_event:flee", {
+  -- the moment the scene starts: the documents are already here and the
+  -- diary/papers switch to the "F." texts (FLED gates both)
+  mod.content.commands:register("mew_event:begin", {
     foreground = true,
     fn = function(ctx)
       require("src.script.Flags").set(ctx.save, FLED)
-      local ow = ctx.overworld
-      if ow then
+      if ctx.overworld then showPapers(ctx.game, ctx.overworld) end
+    end,
+  })
+  -- the scientist has walked to the stairs -- he's gone
+  mod.content.commands:register("mew_event:vanish", {
+    foreground = true,
+    fn = function(ctx)
+      require("src.script.Flags").set(ctx.save, FLED)
+      if ctx.overworld then
         require("src.script.Commands").hide_object(ctx, MANSION, SCIENTIST)
-        showPapers(ctx.game, ow)
+        showPapers(ctx.game, ctx.overworld)
       end
     end,
   })
@@ -449,10 +466,9 @@ return function(mod)
 
   mod.content.map_scripts:register(ISLA, {
     onEnter = function(game, ow)
-      -- one eerie theme for the whole island (data.audio is absent in
-      -- this build, so this is a no-op until audio data is regenerated)
+      -- the Pokemon Mansion theme for the whole island
       pcall(function()
-        require("src.core.Music").play(game.data, "Music_Lavender", nil,
+        require("src.core.Music").play(game.data, "Music_CinnabarMansion", nil,
           { reason = "map", mapId = ISLA })
       end)
     end,

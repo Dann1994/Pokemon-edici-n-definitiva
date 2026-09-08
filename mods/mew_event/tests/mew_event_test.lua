@@ -32,7 +32,8 @@ for _, n in ipairs({ "MEW_EVENT_SCIENTIST", "MEW_EVENT_PAPERS_B", "MEW_EVENT_PAP
 end
 
 -- verbs + script registered
-T.check(Data.commands["mew_event:flee"] ~= nil, "mew_event:flee verb")
+T.check(Data.commands["mew_event:begin"] ~= nil, "mew_event:begin verb")
+T.check(Data.commands["mew_event:vanish"] ~= nil, "mew_event:vanish verb")
 T.check(Data.commands["mew_event:read_doc"] ~= nil, "mew_event:read_doc verb")
 T.check(Data.commands["mew_event:stage_a"] ~= nil, "mew_event:stage_a verb")
 T.check(Data.map_scripts.POKEMON_MANSION_3F ~= nil, "3F map script")
