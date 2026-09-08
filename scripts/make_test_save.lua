@@ -88,6 +88,15 @@ return function(Game)
     save.flags[f] = true
   end
 
+  -- ---- FLY: every town marked visited (save.visited, set on entering a
+  -- fly-town -- OverworldController.lua:470)
+  save.visited = {}
+  for _, town in ipairs({ "PALLET_TOWN", "VIRIDIAN_CITY", "PEWTER_CITY",
+      "CERULEAN_CITY", "VERMILION_CITY", "LAVENDER_TOWN", "CELADON_CITY",
+      "FUCHSIA_CITY", "SAFFRON_CITY", "CINNABAR_ISLAND", "INDIGO_PLATEAU" }) do
+    save.visited[town] = true
+  end
+
   -- ---- Pokedex: 150 owned (everything but MEW), all 151 seen
   for id in pairs(Data.pokemon) do
     save.pokedex.seen[id] = true
