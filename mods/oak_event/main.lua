@@ -66,8 +66,11 @@ return function(mod)
 
   patchObjects(LAB, { { name = RIVAL, sprite = "SPRITE_BLUE", movement = "STAY",
     range = "NONE", x = 4, y = 4, text = "TEXT_OAK_EVENT_RIVAL" } })
+  -- Lance stands on the RIGHT half of the entrance channel (x 10): the
+  -- FLY landing spot for INDIGO_PLATEAU is (9,6), so putting him there
+  -- dropped the player right on top of him.
   patchObjects(PLATEAU, { { name = LANCE, sprite = "SPRITE_LANCE", movement = "STAY",
-    range = "NONE", x = 9, y = 6, text = "TEXT_OAK_EVENT_LANCE" } })
+    range = "NONE", x = 10, y = 6, text = "TEXT_OAK_EVENT_LANCE" } })
   patchObjects(ROUTE1, { { name = OAK, sprite = "SPRITE_OAK", movement = "STAY",
     range = "NONE", x = 14, y = 30, text = "TEXT_OAK_EVENT_OAK" } })
   patchObjects(CINNABAR_LAB, { { name = SCIENTIST, sprite = "SPRITE_SCIENTIST",
@@ -76,7 +79,11 @@ return function(mod)
 
   -- ---- verbs -----------------------------------------------------
   -- the battle: Oak's counter-party mirrors the rival's (beats the
-  -- player's starter), exactly like data/scripts/pallet_town.lua
+  -- player's starter), exactly like data/scripts/pallet_town.lua.  The
+  -- battle plays the Champion theme (Music_FinalBattle) via a runtime
+  -- battleTheme on the trainer record -- BattleState:battleTheme() reads
+  -- it; a mod.content.trainers:patch would be schema-validated against
+  -- the audio module, which the headless test harness does not load.
   mod.content.commands:register("oak_event:battle", {
     foreground = true,
     fn = function(ctx)
@@ -84,18 +91,45 @@ return function(mod)
       local party = 1                                   -- BLASTOISE (chose Charmander)
       if f.EVENT_CHOSE_BULBASAUR then party = 3         -- CHARIZARD
       elseif f.EVENT_CHOSE_SQUIRTLE then party = 2 end  -- VENUSAUR
+      local oak = ctx.game.data.trainers.OPP_PROF_OAK
+      if oak then oak.battleTheme = "Music_FinalBattle" end
       C.start_battle(ctx, "trainer", "OPP_PROF_OAK", party)
     end,
   })
 
-  -- credits + heal + back to the bedroom + autosave + soft reset to title
-  -- (the exact path the Champion fight uses).  Setting BEATEN first makes
-  -- every onEnter below stop showing the event NPCs and unblock the League.
+  -- Straight to the end credits (no Hall of Fame induction / party
+  -- showcase), then heal, drop the player back in the Pallet Town
+  -- bedroom, autosave and soft-reset to the title -- the tail of
+  -- Commands.record_hall_of_fame without the HallOfFame screen.  Setting
+  -- BEATEN first makes every onEnter below stop showing the event NPCs
+  -- and unblock the League.
   mod.content.commands:register("oak_event:finish", {
     foreground = true,
     fn = function(ctx)
       Flags.set(ctx.save, BEATEN)
-      C.record_hall_of_fame(ctx)
+      local Screens = require("src.ui.Screens")
+      local SaveData = require("src.core.SaveData")
+      local Pokemon = require("src.pokemon.Pokemon")
+      local game, runner = ctx.game, ctx.runner
+      Screens.push(game, "Credits", function()
+        runner:resume()
+      end, function()
+        local boot = game.data.field and game.data.field.boot or {}
+        for _, mon in ipairs(ctx.save.party or {}) do Pokemon.heal(mon) end
+        SaveData.applyPostGameHome(ctx.save, boot)
+        if game.overworld then game.overworld.lastOutdoor = ctx.save.lastOutdoor end
+        local saveAllowed = true
+        if game.writeSave then saveAllowed = game:writeSave() ~= false end
+        SaveData.applyPostGameHome(ctx.save, boot)
+        if saveAllowed then SaveData.save(ctx.save) end
+      end)
+      runner:yield()
+      require("src.core.Music").stop()
+      while game.stack:top() do game.stack:pop() end
+      local ok = pcall(Screens.push, game, "IntroMovie", function()
+        if game.makeTitleState then game.stack:push(game:makeTitleState()) end
+      end)
+      if not ok and game.returnToTitle then game:returnToTitle() end
     end,
   })
 
@@ -316,6 +350,9 @@ return function(mod)
     talk = {
       TEXT_OAK_EVENT_OAK = {
         { "face_player" },
+        -- the theme that plays when Oak stops you leaving Pallet at the
+        -- start of the game (data/scripts/story2.lua)
+        { "play_music", "Music_MeetProfOak" },
         { "show_text", "Ah...\fHas llegado." },
         { "show_text", "Me preguntaba\ncuánto tardarías\fen encontrarme." },
         { "show_text", "Supongo que\nnecesitaba una\fúltima excusa para\nrecorrer estos\flugares." },
@@ -358,6 +395,7 @@ return function(mod)
         { "oak_event:battle" },
         { "check_battle_result", "win" }, { "jump_if_false", "end" },
         { "set_flag", BEATEN },
+        { "play_music", "Music_MeetProfOak" },
         { "show_text", "¡Ja!" },
         { "show_text", "Había olvidado lo\nbien que se siente\festo." },
         { "show_text", "Gracias.\fDe verdad." },

@@ -32,7 +32,7 @@ return {
   ["%s took aim!"] = "¡%s apuntó bien!",
   ["%s unleashed energy!"] = "¡%s liberó la energía!",
   ["%s used\nPOKé BALL!"] = "¡%s ha usado\nuna POKé BALL!",
-  ["%s wants\nto fight!"] = "¡%s salvaje\nquiere luchar!",
+  ["%s wants\nto fight!"] = "¡%s quiere\nluchar!",
   ["%s was trapped!"] = "¡%s quedó atrapado!",
   ["%s went to sleep!"] = "¡%s se ha dormido!",
   ["%s's\n%s\ngreatly fell!"] = "¡El %s de\n%s ha bajado\nmucho!",

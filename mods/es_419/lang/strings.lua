@@ -5,7 +5,7 @@
 -- vacio a proposito: cae de vuelta al ingles.
 
 return {
-  ["%s wants\nto fight!"] = "¡%s salvaje\nquiere pelear!",
+  ["%s wants\nto fight!"] = "¡%s quiere\npelear!",
   ["BUG"] = "INSECTO",
   ["FIGHT"] = "LUCHAR",
   ["FIGHTING"] = "PELEA",

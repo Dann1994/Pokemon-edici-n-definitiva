@@ -35,7 +35,16 @@ Commands.start_battle = function(ctx, kind, cls, party)
   ctx.lastBattleResult = "win"
   ctx.lastCheck = true
 end
-Commands.record_hall_of_fame = function() credits.n = credits.n + 1 end
+Commands.play_music = function() end
+local Screens = require("src.ui.Screens")
+Screens.push = function(_, id, onDone, onStart)
+  if id == "Credits" then
+    credits.n = credits.n + 1
+    if onStart then onStart() end
+    if onDone then onDone() end
+  end
+  return {}
+end
 
 local SaveData = require("src.core.SaveData")
 local save = SaveData.newGame()
