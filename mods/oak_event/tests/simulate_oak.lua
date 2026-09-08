@@ -100,13 +100,16 @@ show("El rival, en el laboratorio")
 ck(save.flags.MOD_OAK_RIVAL_TOLD == true, "1ª pista -> MOD_OAK_RIVAL_TOLD")
 
 -- 2) Bill
-talk("BILLS_HOUSE", "TEXT_BILLSHOUSE_BILL_SS_TICKET")
+talk("BILLS_HOUSE", "TEXT_BILLSHOUSE_BILL_CHECK_OUT_MY_RARE_POKEMON")
 show("Bill, en su casa")
 ck(save.flags.MOD_OAK_BILL_TOLD == true, "2ª pista -> MOD_OAK_BILL_TOLD")
 ck(#battles == 0, "hablar con Bill no dispara nada raro")
 
 -- 3) científico de Isla Canela
-talk("CINNABAR_LAB_METRONOME_ROOM", "TEXT_CINNABARLABMETRONOMEROOM_SCIENTIST2")
+onEnter("CINNABAR_LAB")
+ck(toggles.CINNABAR_LAB and toggles.CINNABAR_LAB.OAK_EVENT_SCIENTIST == true,
+   "el científico aparece en el laboratorio de Isla Canela")
+talk("CINNABAR_LAB", "TEXT_OAK_EVENT_SCIENTIST")
 show("Científico del laboratorio de Isla Canela")
 ck(save.flags.MOD_OAK_CINNABAR_TOLD == true, "3ª pista -> MOD_OAK_CINNABAR_TOLD")
 

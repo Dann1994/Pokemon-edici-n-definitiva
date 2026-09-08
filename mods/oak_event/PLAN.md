@@ -42,7 +42,7 @@ Oak opcional ("Creo que voy a entrenar un poco más...").
 ## Archivos
 
 - `mods/oak_event/main.lua` — item(ninguno), verbos, `map_scripts` para
-  `OAKS_LAB`, `PALLET_TOWN`, `BILLS_HOUSE`, `CINNABAR_LAB_METRONOME_ROOM`,
+  `OAKS_LAB`, `PALLET_TOWN`, `BILLS_HOUSE`, `CINNABAR_LAB`,
   `INDIGO_PLATEAU`, `ROUTE_1`; `maps:patch` para los 3 objetos nuevos.
 - `mods/oak_event/tests/oak_event_test.lua` — carga headless + gate + verbos.
 - `mods/oak_event/tests/simulate_oak.lua` — recorre la cadena de pistas y el
@@ -52,6 +52,10 @@ Oak opcional ("Creo que voy a entrenar un poco más...").
 
 | id | mapa | sprite | celda | text |
 |---|---|---|---|---|
-| `OAK_EVENT_RIVAL` | OAKS_LAB | SPRITE_BLUE | (5,3) | TEXT_OAK_EVENT_RIVAL |
+| `OAK_EVENT_RIVAL` | OAKS_LAB | SPRITE_BLUE | (4,4) | TEXT_OAK_EVENT_RIVAL |
+| `OAK_EVENT_SCIENTIST` | CINNABAR_LAB | SPRITE_SCIENTIST | (9,6) | TEXT_OAK_EVENT_SCIENTIST |
 | `OAK_EVENT_LANCE` | INDIGO_PLATEAU | SPRITE_LANCE | (9,6) | TEXT_OAK_EVENT_LANCE |
 | `OAK_EVENT_OAK` | ROUTE_1 | SPRITE_OAK | (14,30) | TEXT_OAK_EVENT_OAK |
+
+Stage 2 (Bill) hooks `TEXT_BILLSHOUSE_BILL_CHECK_OUT_MY_RARE_POKEMON` — the
+post-quest human Bill (`BILLSHOUSE_BILL2`), not the S.S. TICKET one.

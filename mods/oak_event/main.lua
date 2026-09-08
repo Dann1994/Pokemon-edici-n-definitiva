@@ -20,12 +20,13 @@ local LAB    = "OAKS_LAB"
 local PALLET = "PALLET_TOWN"
 local PLATEAU = "INDIGO_PLATEAU"
 local ROUTE1 = "ROUTE_1"
-local CINNABAR_ROOM = "CINNABAR_LAB_METRONOME_ROOM"
+local CINNABAR_LAB = "CINNABAR_LAB"
 local BILL_HOUSE = "BILLS_HOUSE"
 
-local RIVAL = "OAK_EVENT_RIVAL"
-local LANCE = "OAK_EVENT_LANCE"
-local OAK   = "OAK_EVENT_OAK"
+local RIVAL     = "OAK_EVENT_RIVAL"
+local LANCE     = "OAK_EVENT_LANCE"
+local OAK       = "OAK_EVENT_OAK"
+local SCIENTIST = "OAK_EVENT_SCIENTIST"
 
 local function dexOwned(save)
   local n = 0
@@ -69,6 +70,9 @@ return function(mod)
     range = "NONE", x = 9, y = 6, text = "TEXT_OAK_EVENT_LANCE" } })
   patchObjects(ROUTE1, { { name = OAK, sprite = "SPRITE_OAK", movement = "STAY",
     range = "NONE", x = 14, y = 30, text = "TEXT_OAK_EVENT_OAK" } })
+  patchObjects(CINNABAR_LAB, { { name = SCIENTIST, sprite = "SPRITE_SCIENTIST",
+    movement = "STAY", range = "NONE", x = 9, y = 6,
+    text = "TEXT_OAK_EVENT_SCIENTIST" } })
 
   -- ---- verbs -----------------------------------------------------
   -- the battle: Oak's counter-party mirrors the rival's (beats the
@@ -177,14 +181,16 @@ return function(mod)
   -- ================================================================
   --  Stage 2 -- Bill (his house on Route 25)
   -- ================================================================
+  -- Post-quest, the visible Bill is BILLSHOUSE_BILL2 (story.lua swaps him
+  -- in once EVENT_LEFT_BILLS_HOUSE_AFTER_HELPING is set), whose text is
+  -- TEXT_BILLSHOUSE_BILL_CHECK_OUT_MY_RARE_POKEMON -- NOT the SS TICKET
+  -- Bill.  The vanilla handler is just face_player + one flavour line.
   mod.content.map_scripts:register(BILL_HOUSE, {
     talk = {
-      -- BILLSHOUSE_BILL1's object text is TEXT_BILLSHOUSE_BILL_SS_TICKET
-      TEXT_BILLSHOUSE_BILL_SS_TICKET = {
-        { "check_flag", "EVENT_GOT_SS_TICKET" }, { "jump_if_false", "vanilla" },
+      TEXT_BILLSHOUSE_BILL_CHECK_OUT_MY_RARE_POKEMON = {
+        { "face_player" },
         { "check_flag", RIVAL_TOLD }, { "jump_if_false", "vanilla" },
         { "check_flag", BEATEN }, { "jump_if_true", "vanilla" },
-        { "face_player" },
         { "check_flag", BILL_TOLD }, { "jump_if_true", "remind" },
         { "show_text", "¿OAK?\fSí, pasó por aquí\nhace poco." },
         { "show_text", "Estuvimos hablando\nun buen rato." },
@@ -199,33 +205,28 @@ return function(mod)
         { "label", "remind" },
         { "show_text", "El laboratorio más\ngrande de todo\fKANTO. Ya sabes\ncuál." },
         { "jump", "end" },
-        -- --- the vanilla S.S. TICKET conversation, inlined ---------
         { "label", "vanilla" },
-        { "face_player" },
-        { "check_flag", "EVENT_GOT_SS_TICKET" }, { "jump_if_true", "v_got" },
-        { "show_text", "_BillsHouseBillThankYouText" },
-        { "give_item", "S_S_TICKET", 1, false, "_SSTicketNoRoomText" },
-        { "show_text", "_SSTicketReceivedText" },
-        { "set_flag", "EVENT_GOT_SS_TICKET" },
-        { "show_object", "CERULEAN_CITY", "CERULEANCITY_GUARD1" },
-        { "hide_object", "CERULEAN_CITY", "CERULEANCITY_GUARD2" },
-        { "show_text", "_BillsHouseBillWhyDontYouGoInsteadOfMeText" },
-        { "jump", "end" },
-        { "label", "v_got" },
-        { "show_text", "_BillsHouseBillWhyDontYouGoInsteadOfMeText" },
+        { "show_text", "_BillsHouseBillCheckOutMyRarePokemonText" },
         { "label", "end" },
       },
     },
   })
 
   -- ================================================================
-  --  Stage 3 -- the Cinnabar lab (Metronome room scientist)
+  --  Stage 3 -- the Cinnabar lab: a scientist near the entrance
   -- ================================================================
-  mod.content.map_scripts:register(CINNABAR_ROOM, {
+  mod.content.map_scripts:register(CINNABAR_LAB, {
+    onEnter = function(game, ow)
+      local ctx = ctxFor(game, ow)
+      local f = game.save.flags or {}
+      if f[BILL_TOLD] and not f[BEATEN] then
+        C.show_object(ctx, CINNABAR_LAB, SCIENTIST)
+      elseif f[BEATEN] then
+        C.hide_object(ctx, CINNABAR_LAB, SCIENTIST)
+      end
+    end,
     talk = {
-      TEXT_CINNABARLABMETRONOMEROOM_SCIENTIST2 = {
-        { "check_flag", BILL_TOLD }, { "jump_if_false", "vanilla" },
-        { "check_flag", BEATEN }, { "jump_if_true", "vanilla" },
+      TEXT_OAK_EVENT_SCIENTIST = {
         { "face_player" },
         { "check_flag", CINNABAR_TOLD }, { "jump_if_true", "remind" },
         { "show_text", "¡Oh! ¡Eres tú!" },
@@ -245,9 +246,6 @@ return function(mod)
         { "jump", "end" },
         { "label", "remind" },
         { "show_text", "Los combates más\nimportantes de\fKANTO. Ya sabes\ndónde se libran." },
-        { "jump", "end" },
-        { "label", "vanilla" },
-        { "show_text", "_CinnabarLabMetronomeRoomScientist2Text" },
         { "label", "end" },
       },
     },
