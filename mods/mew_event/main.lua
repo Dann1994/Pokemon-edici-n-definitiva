@@ -36,6 +36,14 @@ end
 return function(mod)
   local docs = readTable(mod, "data/documents.lua")
 
+  -- the overworld has :npcByIndex but no :npcByName (data/scripts helpers
+  -- roll their own); match by def.name over ow.npcs
+  local function npcNamed(ow, name)
+    for _, n in ipairs(ow and ow.npcs or {}) do
+      if n.def and n.def.name == name then return n end
+    end
+  end
+
   -- ---- custom script verbs -------------------------------------------
   mod.content.commands:register("mew_event:owns", {
     fn = function(ctx, species)
@@ -151,35 +159,48 @@ return function(mod)
     end,
 
     -- the scientist notices the player the moment they climb the stairs
-    -- into his room: "!" over his head, he walks over, panics at MEWTWO,
-    -- then hurries to the stairs and is gone.
+    -- into his room: "!" over his head, he walks over so the two stand
+    -- face to face, panics at MEWTWO, then leaves for the stairs and the
+    -- screen fades him out.
     onStep = function(game, ow, x, y)
       if game.save.flags[FLED] or not gateMet(game.save) then return false end
       -- the scientist's room around the stair
       if y < 10 or y > 12 or x < 4 or x > 9 then return false end
 
-      local sci = ow.npcByName and ow:npcByName(SCIENTIST)
+      local sci = npcNamed(ow, SCIENTIST)
       local sciIndex = sci and sci.def and sci.def.index
       local px, py = ow.player.cellX, ow.player.cellY
-      -- a free cell next to the player for the scientist to stop at
-      local tx, ty = px, py + 1
-      if py + 1 > 12 then tx, ty = px, py - 1 end
+      -- a walkable cell next to the player for the scientist to stop at,
+      -- and the direction the player then turns to look at him
+      local tx, ty, playerFace = px, py + 1, "down"
+      for _, d in ipairs({ { 0, 1, "down" }, { 0, -1, "up" },
+                           { 1, 0, "right" }, { -1, 0, "left" } }) do
+        local cx, cy = px + d[1], py + d[2]
+        if ow.map and ow.map.isWalkableCell and ow.map:isWalkableCell(cx, cy) then
+          tx, ty, playerFace = cx, cy, d[3]
+          break
+        end
+      end
 
+      local step = sciIndex and { "emote", sciIndex, "shock", 40 } or { "wait", 1 }
       ow.runner:run({
         { "mew_event:begin" },                    -- FLED + papers on, now
-        sciIndex and { "emote", sciIndex, "shock", 40 } or { "wait", 1 },
+        step,                                     -- "!" over his head
         sciIndex and { "move_npc_to", sciIndex, tx, ty } or { "wait", 1 },
-        { "face_player" },
+        { "face_player" },                         -- scientist turns to the player
+        { "face_player_dir", playerFace },         -- player turns to the scientist
         { "show_text", "¡Espera! Llevo días\nleyendo estos\fpapeles viejos..." },
         { "show_text", "Nadie recuerda ya\nqué se investigaba\faquí." },
         { "show_text", "¿Q-qué es ese\nPOKéMON que va\fcontigo...?" },
-        sciIndex and { "emote", sciIndex, "shock", 40 } or { "wait", 1 },
+        step,
         { "show_text", "No..." },
         { "show_text", "¡Es imposible!\fMEWTWO." },
         { "show_text", "¡¿Cómo lo has\nconseguido?!\f¡No debería\nexistir!" },
         { "show_text", "¡Tengo que salir\nde aquí!" },
         sciIndex and { "move_npc_to", sciIndex, STAIR_X, STAIR_Y } or { "wait", 1 },
+        { "fade", "out", 24 },
         { "mew_event:vanish" },
+        { "fade", "in", 24 },
       }, { npc = sci })
       return true
     end,

@@ -25,7 +25,9 @@ end
 Commands.show_text = function(_, text, subs) record(text, subs) end
 Commands.emote = function() end
 Commands.face_player = function() end
+Commands.face_player_dir = function() end
 Commands.move_npc_to = function() end
+Commands.fade = function() end
 Commands.hide_object = function(ctx, mapId, name)
   ctx.save.objectToggles = ctx.save.objectToggles or {}
   ctx.save.objectToggles[mapId] = ctx.save.objectToggles[mapId] or {}
@@ -46,9 +48,11 @@ save.pokedex.owned.MEWTWO = true
 save.party = { Pokemon.new(Data, "MEWTWO", 70), Pokemon.new(Data, "PIKACHU", 60) }
 
 local ow = {
-  map = { id = "POKEMON_MANSION_3F", def = { label = "POKEMON_MANSION_3F" } },
-  npcs = {}, entities = {}, player = { cellX = 6, cellY = 10 },
-  npcByName = function() return { def = { index = 6 } } end,
+  map = { id = "POKEMON_MANSION_3F", def = { label = "POKEMON_MANSION_3F" },
+          isWalkableCell = function() return true end },
+  npcs = { { def = { index = 6, name = "MEW_EVENT_SCIENTIST" },
+            cellX = 5, cellY = 12, facePlayer = function() end } },
+  entities = {}, player = { cellX = 6, cellY = 10 },
 }
 local game = { data = Data, save = save, stack = { push = function() end, top = function() end } }
 ow.runner = ScriptRunner.new(game, ow)
