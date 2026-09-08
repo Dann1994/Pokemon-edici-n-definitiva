@@ -84,7 +84,8 @@ ck(save.flags.MOD_MEW_ISLA_UNLOCKED == true, "MOD_MEW_ISLA_UNLOCKED fijado")
 ow.map = { id = "ISLA_SUPREMA", def = { label = "ISLA_SUPREMA" } }
 runTalk("ISLA_SUPREMA", "TEXT_ISLA_SUPREMA_SIGN")
 show("Cartel junto al bosque")
-ck(table.concat(transcript, " "):find("%- F%."), "el cartel está firmado \"- F.\"")
+ck(table.concat(transcript, " "):find("F%.%.ji"), "el cartel está firmado \"F..ji\"")
+ck(table.concat(transcript, " "):find("D[íi]a 6"), "el cartel es el diario carcomido de Fuji")
 
 -- 5) la estatua: 1ª vez texto, 2ª vez combate
 runTalk("ISLA_SUPREMA", "TEXT_ISLA_SUPREMA_STATUE")

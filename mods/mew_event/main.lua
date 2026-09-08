@@ -108,6 +108,10 @@ return function(mod)
   local STAIR_X, STAIR_Y = 7, 10   -- POKEMON_MANSION_2F warp 2 -> here
 
   -- ---- the map script ---------------------------------------------
+  -- the vanilla wanderer that shares the diary room -- kept out while the
+  -- scientist scene owns the room, back once the player has "got it"
+  local ROOM_NERD = "POKEMONMANSION3F_SUPER_NERD"
+
   local function showPapers(game, ow)
     local C = require("src.script.Commands")
     local ctx = { game = game, save = game.save, overworld = ow }
@@ -115,22 +119,34 @@ return function(mod)
     C.show_object(ctx, MANSION, PAPERS_C)
   end
 
+  local function gateMet(save)
+    local f = save and save.flags or {}
+    if not (f.EVENT_BEAT_CHAMPION_RIVAL and save.pokedex
+            and save.pokedex.owned and save.pokedex.owned.MEWTWO) then
+      return false
+    end
+    for _, mon in ipairs(save.party or {}) do
+      if mon.species == "MEWTWO" then return true end
+    end
+    return false
+  end
+
   mod.content.map_scripts:register(MANSION, {
     -- all-run: composes with the vanilla onEnter
     onEnter = function(game, ow)
       local f = game.save and game.save.flags or {}
+      local C = require("src.script.Commands")
+      local ctx = { game = game, save = game.save, overworld = ow }
+      -- the scientist's room is his alone during the event
+      if (f[FLED] or gateMet(game.save)) and not f[DISCOVERED] then
+        C.hide_object(ctx, MANSION, ROOM_NERD)
+      elseif f[DISCOVERED] then
+        C.show_object(ctx, MANSION, ROOM_NERD)
+      end
       if f[FLED] then
         showPapers(game, ow)
-      elseif f.EVENT_BEAT_CHAMPION_RIVAL and game.save.pokedex
-             and game.save.pokedex.owned and game.save.pokedex.owned.MEWTWO then
-        local hasMewtwo = false
-        for _, mon in ipairs(game.save.party or {}) do
-          if mon.species == "MEWTWO" then hasMewtwo = true break end
-        end
-        if hasMewtwo then
-          require("src.script.Commands").show_object(
-            { game = game, save = game.save, overworld = ow }, MANSION, SCIENTIST)
-        end
+      elseif gateMet(game.save) then
+        C.show_object(ctx, MANSION, SCIENTIST)
       end
     end,
 
@@ -138,17 +154,7 @@ return function(mod)
     -- into his room: "!" over his head, he walks over, panics at MEWTWO,
     -- then hurries to the stairs and is gone.
     onStep = function(game, ow, x, y)
-      local f = game.save.flags or {}
-      if f[FLED] then return false end
-      if not (f.EVENT_BEAT_CHAMPION_RIVAL and game.save.pokedex
-              and game.save.pokedex.owned and game.save.pokedex.owned.MEWTWO) then
-        return false
-      end
-      local hasMewtwo = false
-      for _, mon in ipairs(game.save.party or {}) do
-        if mon.species == "MEWTWO" then hasMewtwo = true break end
-      end
-      if not hasMewtwo then return false end
+      if game.save.flags[FLED] or not gateMet(game.save) then return false end
       -- the scientist's room around the stair
       if y < 10 or y > 12 or x < 4 or x > 9 then return false end
 
@@ -485,11 +491,13 @@ return function(mod)
         { "show_text", "Tómate tu tiempo." },
         { "label", "end" },
       },
+      -- a weathered wooden sign, the letters half worn away
       TEXT_ISLA_SUPREMA_SIGN = {
-        { "show_text", "A quien encuentre\neste lugar:" },
-        { "show_text", "No intentes\ncapturar aquello\fque vive aquí." },
-        { "show_text", "Algunas cosas\ndeben ser\fconocidas sin\nnecesidad de ser\fposeídas." },
-        { "show_text", "     - F." },
+        { "show_text", "Día 6 de ...mbre." },
+        { "show_text", "Si un huma...\nvuelve aqu...\falguna vez" },
+        { "show_text", "...guro que tend...\ngran coraz..." },
+        { "show_text", "...on esa esper...,\nme march..." },
+        { "show_text", "        F..ji" },
       },
       TEXT_ISLA_SUPREMA_STATUE = {
         { "check_flag", MEW_CAPTURED }, { "jump_if_true", "after" },
