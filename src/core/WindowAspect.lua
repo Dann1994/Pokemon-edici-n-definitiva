@@ -57,6 +57,25 @@ function WindowAspect.enable(ratio)
     and ratio or WindowAspect.DEFAULT_RATIO
   WindowAspect.active = true
   Playfield.forceAspect = WindowAspect.ratio
+  -- On the switch from the launcher (1024x768) a plain snap would leave a
+  -- small 1024x576 window.  Open at a comfortable 16:9 that still fits the
+  -- desktop, then let snap() take over from there.
+  if isDesktop() and isWindowed()
+     and love.window and love.window.getMode and love.window.setMode then
+    local w, h, flags = love.window.getMode()
+    local dw, dh = 1920, 1080
+    if love.window.getDesktopDimensions then
+      local gw, gh = love.window.getDesktopDimensions()
+      if gw and gh and gw > 0 and gh > 0 then dw, dh = gw, gh end
+    end
+    local r = WindowAspect.ratio
+    local tw = math.floor(math.min(dw * 0.9, (dh * 0.9) * r) + 0.5)
+    local th = math.floor(tw / r + 0.5)
+    if tw > (w or 0) and th > (h or 0) and tw >= 640 and th >= 360 then
+      love.window.setMode(tw, th, flags)
+      return
+    end
+  end
   WindowAspect.snap()
 end
 
