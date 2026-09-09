@@ -662,10 +662,12 @@ function Game:draw()
   -- intentionally inactive because it is a battle-layout setting.
   local top = self.stack:top()
   local wideBattle = Game.wideBattleInStack(self.stack)
-  local classicOffset = 0
+  local classicOffset, classicOffsetY = 0, 0
   if wideBattle and wideBattle.uiSize then
     Renderer:setUISize(wideBattle:uiSize())
-    classicOffset = math.floor((select(1, Renderer:uiSize()) - Renderer.WIDTH) / 2)
+    local uw, uh = Renderer:uiSize()
+    classicOffset = math.floor((uw - Renderer.WIDTH) / 2)
+    classicOffsetY = math.floor((uh - Renderer.HEIGHT) / 2)
   elseif top and top.uiSize then
     Renderer:setUISize(top:uiSize())
   else
@@ -705,9 +707,9 @@ function Game:draw()
     local wideState = state and state.isWideBattleLayout
       and state:isWideBattleLayout()
     if renderVisible(self.stack, state) and state.draw then
-      if classicOffset ~= 0 and not wideState then
+      if (classicOffset ~= 0 or classicOffsetY ~= 0) and not wideState then
         love.graphics.push()
-        love.graphics.translate(classicOffset, 0)
+        love.graphics.translate(classicOffset, classicOffsetY)
         -- a classic state reports its trueColor rects in its own 160x144
         -- coordinates, so they take the same shift its pixels just got --
         -- centerClassicZones already does exactly this to its zone list,

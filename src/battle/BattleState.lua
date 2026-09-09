@@ -162,7 +162,10 @@ BattleState.BG_WORLD_DIM = 0.55
 
 -- Renderer:setUISize asks the top state for its surface before anything draws
 function BattleState:uiSize()
-  if self:wideLayout() then return WideBattle.WIDTH, WideBattle.HEIGHT end
+  if self:wideLayout() then
+    local w, h = WideBattle.dims(self)
+    return w, h
+  end
   return 160, 144
 end
 
@@ -171,7 +174,7 @@ end
 -- needs a zone list of its own: the invented 160x144 one would leave its
 -- extra columns unremapped in the forced-mono modes (WideBattle.zones).
 function BattleState:sgbPalettes()
-  if self:wideLayout() then return WideBattle.zones() end
+  if self:wideLayout() then return WideBattle.zones(self) end
   return nil
 end
 

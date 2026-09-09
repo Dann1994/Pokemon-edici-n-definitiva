@@ -20,6 +20,10 @@ local WideBattle = require("src.battle.WideBattle")
 local Font = require("src.render.Font")
 local HudTiles = require("src.render.HudTiles")
 
+-- Pin the surface to the classic 304x144 aspect so the shake geometry below
+-- is checked against fixed numbers; the window-aspect sizing has its own test.
+require("src.render.Playfield").forceAspect = WideBattle.WIDTH / WideBattle.HEIGHT
+
 -- ---------------------------------------------------------------- recorder
 -- The stub's push/pop keep no transform, so the translate stack is tracked
 -- here: `tx, ty` is the offset in force when a draw call is issued.  Font and

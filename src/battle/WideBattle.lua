@@ -19,12 +19,61 @@ local Strings = require("src.core.Strings")
 local TypeChart = require("src.battle.TypeChart")
 
 local WideBattle = {
+  -- minimums / the classic wide surface; the live surface is sized to the
+  -- window's aspect by WideBattle.dims so BATTLE SIZE = FILL leaves no bars
+  -- and the message strip lands flush on the window bottom.
   WIDTH = 304,
   HEIGHT = 144,
+  MIN_WIDTH = 304,   -- the 2x2 move grid + PP/type panel need this many tiles
+  MSG_H = 40,        -- the message / command / move strip along the bottom
+  MAX_WIDTH = 640,
   -- everything above this line is battlefield; the 40 rows below it are
   -- the message / command / move windows
   FIELD_BOTTOM = 104,
 }
+
+-- The live surface size.  Matches the window's aspect: at 16:9 that is a
+-- 304-wide surface made taller (more sky) so nothing overflows; a wider
+-- window grows the width instead.  Returns width, height, field-bottom (all
+-- multiples of 8 where the layout needs it), cached per frame on the battle.
+function WideBattle.dims(battle)
+  local aspect
+  local Playfield = require("src.render.Playfield")
+  aspect = Playfield.forceAspect
+  if not (type(aspect) == "number" and aspect > 0) then
+    if love and love.graphics and love.graphics.getDimensions then
+      local w, h = love.graphics.getDimensions()
+      if type(w) == "number" and type(h) == "number" and h > 0 then
+        aspect = w / h
+      end
+    end
+  end
+  if not (type(aspect) == "number" and aspect > 0) then
+    aspect = WideBattle.MIN_WIDTH / WideBattle.HEIGHT
+  end
+  local W, H = WideBattle.MIN_WIDTH, WideBattle.HEIGHT
+  local wantW = math.floor(H * aspect / 8 + 0.5) * 8
+  if wantW > W then
+    -- wide window: grow the width, keep the classic 144 height
+    W = math.min(wantW, WideBattle.MAX_WIDTH)
+  else
+    -- narrower than the classic 304:144 (e.g. 16:9): keep 304 and make the
+    -- surface taller so its aspect still matches the window and FILL leaves
+    -- no bars.  Rounded to whole tiles and capped so a near-square / portrait
+    -- window cannot balloon it.
+    H = math.floor(W / aspect / 8 + 0.5) * 8
+    H = math.max(WideBattle.HEIGHT, math.min(H, 264))
+  end
+  return W, H, H - WideBattle.MSG_H
+end
+
+-- per-frame cache set by WideBattle.draw; helpers read it so they need only
+-- the battle in hand
+local function D(battle)
+  return battle.wideW or WideBattle.WIDTH,
+         battle.wideH or WideBattle.HEIGHT,
+         battle.wideFB or WideBattle.FIELD_BOTTOM
+end
 
 local function monoMode()
   local m = PaletteFX.mode
@@ -112,8 +161,9 @@ local function anchorHUD(battle, x, y, w, h, anchor)
   if not (renderer and renderer.setBattleUIAnchor) then return end
   x = x + (battle.extendedHUDOffsetX or 0)
   y = y + (battle.extendedHUDOffsetY or 0)
-  local x2 = math.min(WideBattle.WIDTH, x + w)
-  local y2 = math.min(WideBattle.HEIGHT, y + h)
+  local sw, sh = D(battle)
+  local x2 = math.min(sw, x + w)
+  local y2 = math.min(sh, y + h)
   x, y = math.max(0, x), math.max(0, y)
   w, h = x2 - x, y2 - y
   if w > 0 and h > 0 then
@@ -150,11 +200,13 @@ end
 -- out to the wide screen's own corners
 local function drawIntroBalls(battle)
   if not battle.introBalls then return end
+  local w, _, fb = D(battle)
   if battle.enemyParty and
       (battle.kind == "trainer" or battle.kind == "link") then
     battle:drawBallRow(battle.enemyParty, 88, 40, -8)
   end
-  battle:drawBallRow(battle.playerParty or battle.game.save.party, 216, 96, 8)
+  battle:drawBallRow(battle.playerParty or battle.game.save.party,
+    w - 88, fb - 8, 8)
 end
 
 local function drawHUDs(battle, slide)
@@ -176,50 +228,63 @@ local function drawHUDs(battle, slide)
   if showStatus and not battle.safari and battle.player and not battle.demo
       and not battle.showPlayerBack and slide == 0
       and not battle.player.fainted then
-    drawStatusPanel(battle, battle.player, 184, 56, true)
+    local w, _, fb = D(battle)
+    -- lower-right, its base flush on the field bottom (just over the message
+    -- strip), mirroring the foe panel pinned to the top-left corner
+    drawStatusPanel(battle, battle.player, w - 15 * 8, fb - 5 * 8, true)
   end
 end
 
 local function drawMessageBox(battle)
-  Font.drawBox(0, 13, 38, 5)
+  local w, _, fb = D(battle)
+  Font.drawBox(0, fb / 8, w / 8, 5)
   love.graphics.setColor(0, 0, 0, 1)
   if battle.scrollPx and battle.scrollPx > 0 then
     battle.scrollPx = battle.scrollPx - 2
     if battle.scrollPx <= 0 then battle.scrollPx = nil end
   end
   local off = battle.scrollPx or 0
-  local ys = { 112, 128 }
+  local ys = { fb + 8, fb + 24 }
   for li, line in ipairs(battle.shown or {}) do
-    local y = (ys[li] or 128) + off
+    local y = (ys[li] or ys[2]) + off
     for i = 1, #line do
       Font.drawCode(line[i], 8 + (i - 1) * 8, y)
     end
   end
   if (battle.msgWaiting or battle.msgPrompt) and battle.frame % 60 < 30 then
-    Font.drawCode(0xEE, 288, 132)
+    Font.drawCode(0xEE, w - 16, fb + 28)
   end
 end
 
+-- the fixed-width right-hand strip: the 2x2 command grid and the move-detail
+-- panel are this wide, the prompt / move-list gets the rest of the window
+local CMD_W = 144   -- 18 tiles
+local DTL_W = 80    -- 10 tiles
+
 local function drawCommandMenu(battle)
+  local w, _, fb = D(battle)
+  local mr = fb / 8
+  local t1, t2 = fb + 8, fb + 24
   local col = (battle.menuIndex - 1) % 2
   local row = math.floor((battle.menuIndex - 1) / 2)
   if battle.safari then
-    Font.drawBox(0, 13, 38, 5)
+    Font.drawBox(0, mr, w / 8, 5)
     love.graphics.setColor(0, 0, 0, 1)
-    Font.draw(Strings("BALLx"), 16, 112)
+    Font.draw(Strings("BALLx"), 16, t1)
     -- wNumSafariBalls immediately after the label, as at hlcoord 7,14
     -- (engine/battle/core.asm:2074-2079) (#540)
-    Font.draw(("%2d"):format(battle.safari.balls), 56, 112)
-    Font.draw(Strings("BAIT"), 168, 112)
-    Font.draw(Strings("THROW ROCK"), 16, 128)
-    Font.draw(Strings("RUN"), 168, 128)
-    Font.drawCode(0xED, col == 0 and 8 or 160, 112 + row * 16)
+    Font.draw(("%2d"):format(battle.safari.balls), 56, t1)
+    Font.draw(Strings("BAIT"), w / 2 + 16, t1)
+    Font.draw(Strings("THROW ROCK"), 16, t2)
+    Font.draw(Strings("RUN"), w / 2 + 16, t2)
+    Font.drawCode(0xED, col == 0 and 8 or w / 2 + 8, t1 + row * 16)
     return
   end
 
   -- the prompt on the left, the 2x2 commands on the right
-  Font.drawBox(0, 13, 20, 5)
-  Font.drawBox(20, 13, 18, 5)
+  local px = w - CMD_W       -- left edge of the command box
+  Font.drawBox(0, mr, px / 8, 5)
+  Font.drawBox(px / 8, mr, CMD_W / 8, 5)
   love.graphics.setColor(0, 0, 0, 1)
   -- The old-man / PROF.OAK catch demo has no party, so makeOldManDemo parks
   -- the WILD mon in battle.player as a placeholder (BattleState:1209).  The
@@ -228,56 +293,67 @@ local function drawCommandMenu(battle)
   -- "What will PIKACHU do?" over Oak's scripted throw (#557).  Leave the
   -- prompt side blank and run the same scripted hand the classic does.
   if battle.demo then
-    Font.draw(Strings("FIGHT"), 176, 112)
-    Font.drawCode(0xE1, 240, 112); Font.drawCode(0xE2, 248, 112)
-    Font.draw(Strings("ITEM"), 176, 128)
-    Font.draw(Strings("RUN"), 240, 128)
+    Font.draw(Strings("FIGHT"), px + 16, t1)
+    Font.drawCode(0xE1, px + 80, t1); Font.drawCode(0xE2, px + 88, t1)
+    Font.draw(Strings("ITEM"), px + 16, t2)
+    Font.draw(Strings("RUN"), px + 80, t2)
     -- next to FIGHT for the first 80 frames, then ITEM
-    Font.drawCode(0xED, 168, (battle.demoTimer or 0) <= 80 and 112 or 128)
+    Font.drawCode(0xED, px + 8, (battle.demoTimer or 0) <= 80 and t1 or t2)
     return
   end
-  Font.draw(Strings("What will"), 8, 112)
+  Font.draw(Strings("What will"), 8, t1)
   local who = battle.player and battle.player.name or ""
-  Font.draw(fitName(who, 112) .. Strings(" do?"), 8, 128)
-  Font.draw(Strings("FIGHT"), 176, 112)
-  Font.drawCode(0xE1, 240, 112) -- 'PK'
-  Font.drawCode(0xE2, 248, 112) -- 'MN'
-  Font.draw(Strings("ITEM"), 176, 128)
-  Font.draw(Strings("RUN"), 240, 128)
-  Font.drawCode(0xED, col == 0 and 168 or 232, 112 + row * 16)
+  Font.draw(fitName(who, px - 48) .. Strings(" do?"), 8, t2)
+  Font.draw(Strings("FIGHT"), px + 16, t1)
+  Font.drawCode(0xE1, px + 80, t1) -- 'PK'
+  Font.drawCode(0xE2, px + 88, t1) -- 'MN'
+  Font.draw(Strings("ITEM"), px + 16, t2)
+  Font.draw(Strings("RUN"), px + 80, t2)
+  Font.drawCode(0xED, col == 0 and px + 8 or px + 72, t1 + row * 16)
 end
 
 local function drawMoveDetails(battle, move)
-  Font.drawBox(28, 13, 10, 5)
+  local w, _, fb = D(battle)
+  local dx = w - DTL_W
+  Font.drawBox(dx / 8, fb / 8, DTL_W / 8, 5)
   if not move then return end
   local def = battle.data.moves[move.id]
   if not def then return end
   local maxPP = def.pp + (move.ppUps or 0) * math.floor(def.pp / 5)
   love.graphics.setColor(0, 0, 0, 1)
-  Font.draw(("PP %2d/%2d"):format(move.pp or 0, maxPP), 232, 112)
+  Font.draw(("PP %2d/%2d"):format(move.pp or 0, maxPP), dx + 8, fb + 8)
   -- battle.data is game.data by reference (BattleState:startBattle sets it
   -- before TypeChart.load(game.data)), so this resolves through the exact
   -- same merged table TypeChart's own cache already has -- a no-op today,
   -- kept only for the same call convention as the pre-battle screens
   -- (SummaryMenu, HallOfFame) that genuinely need the explicit data.
-  Font.draw(fitName(TypeChart.displayName(def.type, battle.data), 64), 232, 128)
+  Font.draw(fitName(TypeChart.displayName(def.type, battle.data), 64),
+    dx + 8, fb + 24)
+end
+
+-- move-name column x and cursor x for the given grid column, plus the row y
+local function moveSlot(battle, col, row)
+  local w, _, fb = D(battle)
+  local half = math.floor((w - DTL_W) / 2)
+  local nameX = col == 0 and 16 or half + 8
+  local curX = col == 0 and 8 or half
+  return nameX, curX, fb + 8 + row * 16
 end
 
 local function drawMoveGrid(battle, moves, selected)
-  -- The 8px font needs 28 tiles for two complete twelve-character move
-  -- names plus their cursors; the details panel gets the other ten.
-  Font.drawBox(0, 13, 28, 5)
+  local w, _, fb = D(battle)
+  -- the move list gets everything left of the PP/type panel
+  Font.drawBox(0, fb / 8, (w - DTL_W) / 8, 5)
   love.graphics.setColor(0, 0, 0, 1)
+  local nameBudget = math.floor((w - DTL_W) / 2) - 24
   for i, move in ipairs(moves or {}) do
-    local col = (i - 1) % 2
-    local row = math.floor((i - 1) / 2)
-    local x, y = col == 0 and 16 or 120, 112 + row * 16
+    local nx, _, y = moveSlot(battle, (i - 1) % 2, math.floor((i - 1) / 2))
     local def = battle.data.moves[move.id]
-    Font.draw(fitName(def and def.name or move.id or "", 96), x, y)
+    Font.draw(fitName(def and def.name or move.id or "", nameBudget), nx, y)
   end
-  local col = (selected - 1) % 2
-  local row = math.floor((selected - 1) / 2)
-  Font.drawCode(0xED, col == 0 and 8 or 112, 112 + row * 16)
+  local _, cx, cy = moveSlot(battle, (selected - 1) % 2,
+    math.floor((selected - 1) / 2))
+  Font.drawCode(0xED, cx, cy)
   drawMoveDetails(battle, moves and moves[selected])
 end
 
@@ -287,9 +363,9 @@ local function drawMoveMenu(battle)
   -- (PlaceMenuCursor's tilemap write, home/window.asm:184-185); drawCode blits
   -- black-on-transparent, so skip the 0xEC instead of stacking glyphs (#814).
   if battle.moveSwapIndex and battle.moveSwapIndex ~= battle.moveIndex then
-    local col = (battle.moveSwapIndex - 1) % 2
-    local row = math.floor((battle.moveSwapIndex - 1) / 2)
-    Font.drawCode(0xEC, col == 0 and 8 or 112, 112 + row * 16)
+    local _, cx, cy = moveSlot(battle, (battle.moveSwapIndex - 1) % 2,
+      math.floor((battle.moveSwapIndex - 1) / 2))
+    Font.drawCode(0xEC, cx, cy)
   end
 end
 
@@ -304,10 +380,11 @@ local function drawTextArea(battle)
   elseif battle.phase == "mimicSelect" then
     drawMoveGrid(battle, battle.mimicMoves, battle.mimicIndex)
   else
-    Font.drawBox(0, 13, 38, 5)
+    local w, _, fb = D(battle)
+    Font.drawBox(0, fb / 8, w / 8, 5)
   end
-  anchorHUD(battle, 0, WideBattle.FIELD_BOTTOM,
-    WideBattle.WIDTH, WideBattle.HEIGHT - WideBattle.FIELD_BOTTOM, "bottom")
+  local w, h, fb = D(battle)
+  anchorHUD(battle, 0, fb, w, h - fb, "bottom")
 end
 
 -- Battle animations are authored in the original 160px coordinate space.
@@ -315,7 +392,9 @@ end
 -- and enemy anchors: drawing the whole animation through both side regions
 -- would duplicate any tiles overlapping the other side's source range (most
 -- visibly the send-out POOF reappearing on the far right).
-function WideBattle.animationOffset(sprites)
+function WideBattle.animationOffset(sprites, w, fb)
+  w = (type(w) == "number" and w) or WideBattle.WIDTH
+  fb = (type(fb) == "number" and fb) or WideBattle.FIELD_BOTTOM
   if not sprites or #sprites == 0 then return 0, 0 end
   local minX, maxX = math.huge, -math.huge
   for _, sprite in ipairs(sprites) do
@@ -324,8 +403,9 @@ function WideBattle.animationOffset(sprites)
   end
   local center = (minX + maxX) / 2
   local t = math.max(0, math.min(1, (center - 40) / 80))
-  return math.floor(20 + 116 * t + 0.5),
-         math.floor(8 * (1 - t) + 0.5)
+  local px, ex = 20, w - 168        -- the player / enemy region x-translates
+  return math.floor(px + (ex - px) * t + 0.5),
+         math.floor((fb - 96) * (1 - t) + 0.5)
 end
 
 local function currentAnimationSprites(battle)
@@ -341,14 +421,17 @@ end
 local function drawAnimationLayer(battle)
   local sprites = currentAnimationSprites(battle)
   if not sprites or #sprites == 0 then return end
-  local dx, dy = WideBattle.animationOffset(sprites)
-  inRegion(0, 0, WideBattle.WIDTH, WideBattle.FIELD_BOTTOM, dx, dy,
+  local w, _, fb = D(battle)
+  local dx, dy = WideBattle.animationOffset(sprites, w, fb)
+  inRegion(0, 0, w, fb, dx, dy,
     function() battle:drawAnimLayer(false) end)
 end
 
--- The whole 304x144 composition for one frame.
+-- The whole window-sized composition for one frame.
 function WideBattle.draw(battle)
   local g = love.graphics
+  battle.wideW, battle.wideH, battle.wideFB = WideBattle.dims(battle)
+  local W, H, FB = battle.wideW, battle.wideH, battle.wideFB
   local renderer = battle.game and battle.game.renderer
   local extendedHUD = battle:extendedHUD() and renderer
                       and renderer.beginBattleHUDPass
@@ -364,7 +447,7 @@ function WideBattle.draw(battle)
     else
       g.setColor(PaletteFX.paperShade(battle.data))
     end
-    g.rectangle("fill", 0, 0, WideBattle.WIDTH, WideBattle.HEIGHT)
+    g.rectangle("fill", 0, 0, W, H)
   end
   -- AskName clears the field the same way the classic layout does
   if battle.blankForAskName or coveredByOpaqueState(battle) then return end
@@ -387,9 +470,11 @@ function WideBattle.draw(battle)
   -- edge is not sheared off it (a vertical shake used to clip the player's
   -- feet at FIELD_BOTTOM).
   battle.wideRegion = true
-  inRegion(sx, 32 + sy, 160, WideBattle.FIELD_BOTTOM - 32, 20 + sx, 8 + sy,
+  -- player pic: lower-left, its feet on FB (classic feet are at y=96, so the
+  -- region translates down by FB-96).  enemy pic: upper-right.
+  inRegion(sx, 32 + sy, 160, FB - 32, 20 + sx, (FB - 96) + sy,
     function() battle:drawPicsLayer(slide, 0, 0, "player", true) end)
-  inRegion(160 + sx, sy, 144, WideBattle.FIELD_BOTTOM, 136 + sx, sy,
+  inRegion((W - 144) + sx, sy, 144, FB, (W - 168) + sx, sy,
     function() battle:drawPicsLayer(slide, 0, 0, "enemy", true) end)
   battle.wideRegion = nil
   drawIntroBalls(battle)
@@ -419,7 +504,7 @@ function WideBattle.draw(battle)
     shaken(function() drawTextArea(battle) end)
     if fx and fx.flash and fx.flash > 0 and battle.frame % 4 < 2 then
       g.setColor(1, 1, 1, 0.85)
-      g.rectangle("fill", 0, 0, WideBattle.WIDTH, WideBattle.HEIGHT)
+      g.rectangle("fill", 0, 0, W, H)
     end
     renderer:endBattleHUDPass(previous)
   else
@@ -429,7 +514,7 @@ function WideBattle.draw(battle)
 
   if fx and fx.flash and fx.flash > 0 and battle.frame % 4 < 2 then
     g.setColor(1, 1, 1, 0.85)
-    g.rectangle("fill", 0, 0, WideBattle.WIDTH, WideBattle.HEIGHT)
+    g.rectangle("fill", 0, 0, W, H)
   end
   g.setColor(1, 1, 1, 1)
   if Runtime.wantsHook("battle.overlay") then
@@ -443,8 +528,9 @@ end
 -- surface; the forced-mono modes still want their whole-screen remap, and
 -- get one sized to the wide surface instead of the 160x144 rectangle
 -- PaletteFX.ensureZones would invent (which would leave 144 columns raw).
-function WideBattle.zones()
+function WideBattle.zones(battle)
   local w, h = WideBattle.WIDTH, WideBattle.HEIGHT
+  if battle then w, h = D(battle) end
   if monoMode() then
     -- sendColors runs the mode's own substitution (CLASSIC's pea greens,
     -- the inverted permutation), exactly as it does for ensureZones' zone
