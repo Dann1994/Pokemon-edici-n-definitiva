@@ -275,12 +275,17 @@ local function buildRows(game)
     -- BATTLE SIZE is independent of this and works under either.
     { id = "uiLayout", label = Strings("UI LAYOUT"),
       value = function(g)
-        return g.save.options.uiLayout == "dynamic" and Strings("DYNAMIC")
+        local v = g.save.options.uiLayout
+        return v == "dynamic" and Strings("DYNAMIC")
+               or v == "wide" and Strings("WIDE")
                or Strings("CENTERED")
       end,
-      step = function(g)
+      step = function(g, dir)
         local o = g.save.options
-        o.uiLayout = o.uiLayout == "dynamic" and "centered" or "dynamic"
+        local order = { "centered", "dynamic", "wide" }
+        local i = 1
+        for k, v in ipairs(order) do if v == o.uiLayout then i = k end end
+        o.uiLayout = order[wrapIndex(i - 1 + (dir or 1), #order) + 1]
         return true
       end },
     { id = "ruleset", label = Strings("RULESET"),

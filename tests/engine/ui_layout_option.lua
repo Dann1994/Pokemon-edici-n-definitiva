@@ -40,6 +40,16 @@ T.eq(Game.dynamicUI({ options = {} }), false,
 T.eq(Game.dynamicUI({}), false, "a save with no options at all is centered")
 T.eq(Game.dynamicUI(nil), false, "and no save at all is centered")
 
+-- WIDE is a third value: the overworld dialogue box spans the playfield,
+-- nothing else moves.  It does NOT turn dynamicUI on.
+T.eq(Game.wideUI({ options = { uiLayout = "wide" } }), true, "WIDE reads true")
+T.eq(Game.wideUI({ options = { uiLayout = "dynamic" } }), false,
+  "DYNAMIC is not WIDE")
+T.eq(Game.wideUI({ options = {} }), false, "and an old save is not WIDE")
+T.eq(Game.wideUI(nil), false, "and no save at all is not WIDE")
+T.eq(Game.dynamicUI({ options = { uiLayout = "wide" } }), false,
+  "WIDE leaves the START menu / zoom step-down alone")
+
 -- ------------------------------------------------------------- the gate
 
 local function anchorsAfter(opts)
@@ -149,6 +159,11 @@ row.step(game, 1)
 T.eq(game.save.options.uiLayout, "dynamic", "stepping it turns docking on")
 T.eq(row.value(game), "DYNAMIC", "and the row says so")
 row.step(game, 1)
-T.eq(game.save.options.uiLayout, "centered", "stepping again returns to it")
+T.eq(game.save.options.uiLayout, "wide", "stepping again reaches WIDE")
+T.eq(row.value(game), "WIDE", "and the row says so")
+row.step(game, 1)
+T.eq(game.save.options.uiLayout, "centered", "and the cycle wraps to CENTERED")
+row.step(game, -1)
+T.eq(game.save.options.uiLayout, "wide", "stepping back from CENTERED reaches WIDE")
 
 T.finish("ui layout option")

@@ -565,6 +565,16 @@ function Game.dynamicUI(save)
   return options ~= nil and options.uiLayout == "dynamic"
 end
 
+-- UI LAYOUT = WIDE: the overworld dialogue box (and the YES/NO that pops over
+-- it) span the whole playfield instead of a centred 160px letterbox.  Only
+-- this half of the docking behaviour -- the START menu, HUD and every other
+-- element stay exactly where CENTERED puts them.  Like dynamicUI, a save with
+-- no option set (or no save) reads false.
+function Game.wideUI(save)
+  local options = save and save.options
+  return options ~= nil and options.uiLayout == "wide"
+end
+
 function Game.uiAnchorsHeldInStack(stack)
   for i = #(stack and stack.states or {}), 1, -1 do
     local state = stack.states[i]

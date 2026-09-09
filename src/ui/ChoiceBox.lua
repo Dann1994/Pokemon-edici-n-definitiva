@@ -28,6 +28,11 @@ function ChoiceBox.new(game, onChoose, opts)
   self.ty = (opts and opts.ty) or box.ty
   self.tw = (opts and opts.tw) or box.tw
   self.th = (opts and opts.th) or box.th
+  -- UI LAYOUT = WIDE: opts.wide is the wide dialogue box's tile width; ride
+  -- its scratch layer, right-aligned to that box's inner edge like the
+  -- original's flush-right YES/NO.
+  self.wide = opts and opts.wide
+  if self.wide then self.tx = self.wide - self.tw end
   -- TwoOptionMenuStrings rows carry their own labels and a "blank line
   -- before first menu item?" flag (data/yes_no_menu_strings.asm:8-16)
   self.labels = (opts and opts.labels) or { "YES", "NO" }
@@ -74,12 +79,27 @@ end
 function ChoiceBox:draw()
   if not UIVisibility.bottomVisible(self, false) then return end
   local tx, ty, tw, th = self.tx, self.ty, self.tw, self.th
+  local rr = self.game and self.game.renderer
+  -- UI LAYOUT = WIDE: compose onto the dialogue box's scratch layer and hand
+  -- the renderer the same wide region to stretch flush along the bottom.
+  if self.wide and rr and rr.beginWideDialoguePass then
+    local prev = rr:beginWideDialoguePass()
+    self:paint(tx, ty, tw, th)
+    rr:endWideDialoguePass(prev)
+    local cols = rr:wideOverworldTiles()
+    rr:setWideDialogueAnchor(0, 12 * 8, cols * 8, 6 * 8)
+    return
+  end
   -- rides the same bottom anchor as the dialogue box it sits above, so the
   -- pair travels together (the anchor keeps each element's gap from the edge)
   local r = self.anchor and self.game and self.game.renderer
   if r and r.setUIAnchor then
     r:setUIAnchor(tx * 8, ty * 8, tw * 8, th * 8, self.anchor)
   end
+  self:paint(tx, ty, tw, th)
+end
+
+function ChoiceBox:paint(tx, ty, tw, th)
   -- pokegold home/menu.asm YesNoBox: font-page tiles take the screen's own
   -- BG palette 0 colour 0, same as TextBox.lua's paper fold.
   local paper = self.game and self.game.textboxPaper and self.game:textboxPaper()

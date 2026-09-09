@@ -126,6 +126,22 @@ end
 -- the last page finishes typing, which is where the caller pushes whatever
 -- goes on top of it (#591).  stay.prompt waits out one arrowed A/B press
 -- first (TextCommand_PROMPT_BUTTON, home/text.asm:434-444) (#1511).
+-- UI LAYOUT = WIDE gate: on for a box that sits directly over the overworld
+-- map (or over another wide box), off inside a battle or any state that
+-- composes its own screen (holdsUIAnchors), and off when the window is not
+-- actually wider than the classic ratio.
+function TextBox.wantsWide(game)
+  if not game then return false end
+  local Game = require("src.core.Game")
+  if not Game.wideUI(game.save) then return false end
+  if Game.uiAnchorsHeldInStack(game.stack) then return false end
+  local r = game.renderer
+  if not (r and r.wideOverworldTiles) then return false end
+  local top = game.stack and game.stack.top and game.stack:top()
+  if not (top and (top.isOverworld or top.wantsWideUI)) then return false end
+  return r:wideOverworldTiles() > BOX_TW
+end
+
 function TextBox.new(game, text, onDone, opts)
   local self = setmetatable({}, TextBox)
   self.game = game
@@ -158,11 +174,24 @@ function TextBox.new(game, text, onDone, opts)
   -- cart never closed the box in the first place.
   self.instant = opts and opts.instant
   local box = Theme.textBox or {}
-  self.boxTx = box.tx or BOX_TX
-  self.boxTy = box.ty or BOX_TY
-  self.boxTw = box.tw or BOX_TW
-  self.boxTh = box.th or BOX_TH
-  self.maxCols = box.maxCols or MAX_COLS
+  -- UI LAYOUT = WIDE: an overworld box gets its true tile width from the
+  -- playfield and paginates against it (paginate measures pixels, so the
+  -- wider budget just wraps later).  Everything else -- vertical rows, the
+  -- YES/NO that hangs off it -- is unchanged.
+  self.wide = TextBox.wantsWide(game)
+  if self.wide then
+    local tiles = game.renderer:wideOverworldTiles()
+    self.boxTx, self.boxTy, self.boxTh = 0, box.ty or BOX_TY, box.th or BOX_TH
+    self.boxTw = tiles
+    self.maxCols = tiles - 2
+    self.wantsWideUI = true
+  else
+    self.boxTx = box.tx or BOX_TX
+    self.boxTy = box.ty or BOX_TY
+    self.boxTw = box.tw or BOX_TW
+    self.boxTh = box.th or BOX_TH
+    self.maxCols = box.maxCols or MAX_COLS
+  end
   self.textX = (self.boxTx + 1) * 8
   self.line1Y = (self.boxTy + 2) * 8
   self.line2Y = (self.boxTy + 4) * 8
@@ -541,7 +570,10 @@ function TextBox:update(dt)
         end, { defaultNo = self.defaultNo, noSound = self.choiceNoSound,
                labels = self.choiceLabels, box = self.choiceBox,
                -- this box is anchored below it; the pair moves together
-               anchor = "bottom" }))
+               anchor = "bottom",
+               -- UI LAYOUT = WIDE: ride the same wide layer, right-aligned to
+               -- the wide box's inner edge
+               wide = self.wide and self.boxTw or nil }))
       end
       return
     end
@@ -640,15 +672,30 @@ end
 
 function TextBox:draw()
   if not UIVisibility.bottomVisible(self, true) then return end
+  local r = self.game and self.game.renderer
+  -- UI LAYOUT = WIDE: paint the wider box onto the renderer's own scratch
+  -- layer and hand it back the region to stretch flush along the window
+  -- bottom.  A ChoiceBox popped over it appends to the same layer.
+  if self.wide and r and r.beginWideDialoguePass then
+    local prev = r:beginWideDialoguePass()
+    self:paint()
+    r:endWideDialoguePass(prev)
+    r:setWideDialogueAnchor(self.boxTx * 8, self.boxTy * 8,
+                            self.boxTw * 8, self.boxTh * 8)
+    return
+  end
   -- The dialogue box belongs against the bottom of the screen, not floating
   -- in the middle of a zoomed-out letterbox.  Declared per frame; the
   -- renderer blits this region to the screen edge and the rest of the UI
   -- where it always was (Renderer:setUIAnchor).
-  local r = self.game and self.game.renderer
   if r and r.setUIAnchor then
     r:setUIAnchor(self.boxTx * 8, self.boxTy * 8,
                   self.boxTw * 8, self.boxTh * 8, "bottom")
   end
+  self:paint()
+end
+
+function TextBox:paint()
   -- The box's own tiles are all font-page ($79-$7e frame, ' ' $7f interior),
   -- so they take whatever BG palette 0 colour 0 the screen UNDER the box is
   -- using.  On every Gen 1 screen and nearly every Gold one that is white and

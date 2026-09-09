@@ -269,6 +269,65 @@ function Renderer:endBattleHUDPass(previous)
   love.graphics.setCanvas(previous or self.canvas)
 end
 
+-- UI LAYOUT = WIDE (overworld dialogue only).  The box is genuinely wider,
+-- not a stretched 160px one: it is drawn at its own tile width into a
+-- transparent scratch surface and endFrame stretches that surface by the
+-- sub-pixel remainder so it lands flush on both window edges at the bottom.
+-- Width is the visible playfield in whole tiles at the UI scale; 160 (a
+-- no-op) whenever the window is not wider than the classic 10:9.
+function Renderer:wideOverworldTiles()
+  local r = self:frameRects()
+  if r.Ux <= 0 then return self.WIDTH / 8 end
+  local tiles = math.floor(r.vuw / r.Ux / 8 + 0.5)
+  local maxT = math.floor(self.MAX_UI_WIDTH / 8)
+  if tiles < self.WIDTH / 8 then tiles = self.WIDTH / 8 end
+  if tiles > maxT then tiles = maxT end
+  return tiles
+end
+
+function Renderer:wideDialogueActive()
+  return self.wideDialogueCanvas ~= nil and self.wideDialogueDirty
+end
+
+-- Sets wideDialogueCanvas as the target and returns the previous one; clears
+-- it only on the first call of the frame so a TextBox and the ChoiceBox that
+-- pops over it compose onto the same layer.
+function Renderer:beginWideDialoguePass()
+  local w = self:wideOverworldTiles() * 8
+  local h = self.HEIGHT
+  if not self.wideDialogueCanvas
+     or self.wideDialogueCanvas:getWidth() ~= w
+     or self.wideDialogueCanvas:getHeight() ~= h then
+    if self.wideDialogueCanvas and self.wideDialogueCanvas.release then
+      self.wideDialogueCanvas:release()
+    end
+    self.wideDialogueCanvas = PixelCanvas.new(w, h, "nearest")
+  end
+  local previous = (love.graphics.getCanvas and love.graphics.getCanvas())
+    or self.canvas
+  love.graphics.setCanvas(self.wideDialogueCanvas)
+  if not self.wideDialogueDirty then
+    love.graphics.clear(0, 0, 0, 0)
+    self.wideDialogueDirty = true
+  end
+  return previous, w, h
+end
+
+function Renderer:endWideDialoguePass(previous)
+  love.graphics.setCanvas(previous or self.canvas)
+end
+
+-- shape matches addUIAnchor() below; inlined because that local is not yet in
+-- scope this high in the file
+function Renderer:setWideDialogueAnchor(x, y, w, h)
+  if self.uiAnchorHold then return end
+  self.uiAnchors = self.uiAnchors or {}
+  self.uiAnchors[#self.uiAnchors + 1] = {
+    x = x, y = y, w = w, h = h, anchor = "bottomwide",
+    windowClamped = true, canvas = self.wideDialogueCanvas, extract = false,
+  }
+end
+
 -- LOVE-unit draw scales endFrame uses for the UI blit: integer framebuffer
 -- scale (fitScale) divided by each axis's unit→pixel factor, so a GB pixel
 -- lands on fitScale() whole PHYSICAL pixels on both axes once LOVE applies
@@ -351,6 +410,10 @@ function Renderer:beginFrame(transparent)
   self.screenVeil = nil
   -- edge-anchored UI regions, re-declared by their elements each frame
   self.uiAnchors = nil
+  -- UI LAYOUT = WIDE: the overworld dialogue box + its YES/NO render into
+  -- wideDialogueCanvas, cleared once per frame the first time a state asks
+  -- for it (TextBox draws, then a ChoiceBox on top appends to the same layer)
+  self.wideDialogueDirty = false
   -- last frame's trueColor rects and sprite redraws go before anything
   -- draws this one
   PaletteFX.clearTrueColor()
@@ -1212,7 +1275,14 @@ function Renderer:endFrame(zones, worldZones)
       local gapR = (uiw - (a.x + a.w)) * Ux
       local gapB = (uih - (a.y + a.h)) * Uy
       local dx, dy
-      if a.anchor == "bottom" then
+      if a.anchor == "bottomwide" then
+        -- UI LAYOUT = WIDE: span the full playfield along the window bottom.
+        -- The scratch canvas is a whole number of tiles wide, so stretch it
+        -- by the sub-pixel remainder to land flush on both edges.
+        dx = vux
+        dy = vuy + vuh - dh
+        dw = vuw
+      elseif a.anchor == "bottom" then
         dx = uox + a.x * Ux -- horizontally it stays with the letterbox
         dy = vuy + vuh - gapB - dh
       elseif a.anchor == "top" then
@@ -1240,9 +1310,18 @@ function Renderer:endFrame(zones, worldZones)
       -- shift the draw origin so canvas pixel (a.x, a.y) lands on (dx, dy).
       -- The zone scissors are computed from the same origin, so an SGB
       -- region travels with the element instead of staying in the letterbox.
-      blit(p.a.canvas or self.canvas, Ux, Uy, zones, Ux, Uy,
-           p.dx - p.a.x * Ux, p.dy - p.a.y * Uy,
-           clipToView(p.dx, p.dy, p.dw, p.dh))
+      if p.a.anchor == "bottomwide" then
+        -- own white/black layer, no SGB zones; sx stretches the tile-rounded
+        -- canvas to the exact playfield width
+        local sx = p.a.w > 0 and (p.dw / (p.a.w * Ux)) * Ux or Ux
+        blit(p.a.canvas, sx, Uy, nil, sx, Uy,
+             p.dx - p.a.x * sx, p.dy - p.a.y * Uy,
+             clipToView(p.dx, p.dy, p.dw, p.dh))
+      else
+        blit(p.a.canvas or self.canvas, Ux, Uy, zones, Ux, Uy,
+             p.dx - p.a.x * Ux, p.dy - p.a.y * Uy,
+             clipToView(p.dx, p.dy, p.dw, p.dh))
+      end
     end
   end
   local uiRedraws = PaletteFX.uiSpriteRedraws()
