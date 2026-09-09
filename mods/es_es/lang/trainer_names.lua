@@ -1,12 +1,16 @@
 -- Trainer class names
 --
--- Nombres oficiales (glosario de referencia).
+-- Trainer class names for Es Es.
 
 return {
+  ["OPP_AGATHA"] = "",
   ["OPP_BEAUTY"] = "BELLEZA",
   ["OPP_BIKER"] = "MOTORISTA",
   ["OPP_BIRD_KEEPER"] = "ORNITÓLOGO",
   ["OPP_BLACKBELT"] = "CINTURÓN NEGRO",
+  ["OPP_BLAINE"] = "",
+  ["OPP_BROCK"] = "",
+  ["OPP_BRUNO"] = "",
   ["OPP_BUG_CATCHER"] = "CAZABICHOS",
   ["OPP_BURGLAR"] = "LADRÓN",
   ["OPP_CHANNELER"] = "MÉDIUM",
@@ -15,14 +19,21 @@ return {
   ["OPP_COOLTRAINER_M"] = "ENTRENADOR GUAY♂",
   ["OPP_CUE_BALL"] = "CALVO",
   ["OPP_ENGINEER"] = "INGENIERO",
+  ["OPP_ERIKA"] = "",
   ["OPP_FISHER"] = "PESCADOR",
   ["OPP_GAMBLER"] = "APOSTADOR",
   ["OPP_GENTLEMAN"] = "CABALLERO",
+  ["OPP_GIOVANNI"] = "",
   ["OPP_HIKER"] = "MONTAÑERO",
   ["OPP_JR_TRAINER_F"] = "ENTRENADOR JR♀",
   ["OPP_JR_TRAINER_M"] = "ENTRENADOR JR♂",
   ["OPP_JUGGLER"] = "MALABARISTA",
+  ["OPP_KOGA"] = "",
+  ["OPP_LANCE"] = "",
   ["OPP_LASS"] = "CHICA",
+  ["OPP_LORELEI"] = "",
+  ["OPP_LT_SURGE"] = "",
+  ["OPP_MISTY"] = "",
   ["OPP_POKEMANIAC"] = "POKéMANÍACO",
   ["OPP_PROF_OAK"] = "PROF. OAK",
   ["OPP_PSYCHIC_TR"] = "PSÍQUICO",
@@ -31,10 +42,12 @@ return {
   ["OPP_RIVAL3"] = "RIVAL",
   ["OPP_ROCKER"] = "ROQUERO",
   ["OPP_ROCKET"] = "TEAM ROCKET",
+  ["OPP_SABRINA"] = "",
   ["OPP_SAILOR"] = "MARINERO",
   ["OPP_SCIENTIST"] = "CIENTÍFICO",
   ["OPP_SUPER_NERD"] = "SUPERNERD",
   ["OPP_SWIMMER"] = "NADADOR",
   ["OPP_TAMER"] = "DOMADOR",
   ["OPP_UNUSED_JUGGLER"] = "MALABARISTA",
+  ["OPP_YOUNGSTER"] = "",
 }
