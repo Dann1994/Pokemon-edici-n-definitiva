@@ -118,7 +118,7 @@ Catálogo — decidir cuáles activar por defecto:
 | 7b.1 | Selección de idioma | [mod] `LANGUAGE` | HECHO | El motor ya trae el sistema: cada traducción es un mod `category:LANGUAGE` + `language:true`. Se elige en el GESTOR DE MODS (F10) / pestaña MODS. Funciona en online. |
 | 7b.2 | **Español (España)** — `mods/es_ES` | [mod] `modkit translation` | PARCIAL | `--pixel-font` (tildes/ñ/¿¡ sin hoja de glifos). Traducido: 165 movimientos, 15 tipos, ~70 objetos, clases de entrenador, HUD de estado, ~115 cadenas de interfaz/combate. **Sin traducir: el guion narrativo** (`dialogue.lua`, 2592 líneas) — cae al inglés; el inglés de referencia está en `es_ES-worksheet/` (no se sube). No reproduje el guion oficial de Nintendo; se rellena a mano o con MT. Nombres = glosario de referencia (PokéAPI/WikiDex). Test 18/18. |
 | 7b.3 | **Español latino** — `mods/es_419` | [mod] delta sobre es_ES | HECHO (nombres) | Depende de `es_ES` y cambia los 165 movimientos + tipos (Insecto/Pelea) + Poké Balls (Pokébola…) a la traducción latina de **Leyendas Pokémon: Z-A**. Fuente: PokéAPI locale `es` (= la traducción de Z-A) contrastado con Pokéxperto. |
-| 7b.4 | Guion narrativo en español | — | PENDIENTE | ~4500 líneas (2592 de `dialogue.lua` + narrativa de `strings.lua`). No reproduzco la localización oficial. Opciones: traducción propia incremental, pasada de traducción automática como borrador, o dejarlo en inglés. |
+| 7b.4 | Guion narrativo en español | traducción propia | HECHO | `mods/es_es/lang/dialogue.lua` — **2592/2592 líneas traducidas** (100%) en 13 lotes, traducción propia (no la localización oficial de Nintendo). Glosario de topónimos/objetos consistente con 7b.2. Merge vía `scripts/apply_es_dialogue.py` desde TSVs en `es_ES-worksheet/es/` (no se suben). Los diálogos de los eventos Mew/Oak van aparte (hard-coded en cada mod). Test `es_ES_test.lua` 22/22, suite completa sin regresiones (11 fallos de infra de base). |
 | 7b.5 | Rejilla de nombres con Ñ | [mod] hook `ui.naming.grid` | FUTURO | `es_ES/lang/naming.lua` puede añadir la Ñ a la pantalla de poner mote. |
 
 ## 8. Ya aplicado en el fork (infra)
@@ -162,7 +162,7 @@ Catálogo — decidir cuáles activar por defecto:
 2. **§7.2 / §7.3** — playtest real en el juego: (Mew) Mansión → Fuji → marinero → isla → Mew;
    (Oak) lab/rival → Bill → Isla Canela → Lance → Ruta 1 → combate → créditos.
 3. **§7.1** — qué eventos nuevos querés además de Mew y Oak.
-5. **§7b.4** — guion narrativo en español: traducción propia / MT de borrador / dejarlo en inglés.
+5. **§7b.4** — ~~guion narrativo en español~~ HECHO (2592/2592). Falta solo tu revisión en juego y ajustes de tono si algo chirría.
 6. **§6.1** — probar el modo LAN con 2 instancias.
 7. **§1.1** — navegación del menú de ataques en widescreen (quedó en grid; ajuste cosmético).
 8. **§5** — QoL: ¿subir `textSpeed` a máx, `battleStyle="set"`, `animations`?
