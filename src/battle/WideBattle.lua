@@ -121,13 +121,13 @@ local function anchorHUD(battle, x, y, w, h, anchor)
   end
 end
 
--- One side's status box: name and level on the first line, a long HP bar
--- under it, and the numeric HP on the player's box only (the foe's exact
--- HP is never shown, like the original).
+-- One side's status: name and level on the first line, a long HP bar under
+-- it, and the numeric HP on the player's side only (the foe's exact HP is
+-- never shown, like the original).  No frame around it -- the name / level /
+-- HP bar float on the paper field the way the classic 160px HUD does.
 local function drawStatusPanel(battle, battler, x, y, player)
   local tx, ty = math.floor(x / 8), math.floor(y / 8)
   local tw, th = player and 15 or 16, player and 5 or 4
-  Font.drawBox(tx, ty, tw, th)
   love.graphics.setColor(0, 0, 0, 1)
 
   local nameWidth = player and 64 or 80
