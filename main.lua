@@ -416,6 +416,8 @@ local function returnToLauncher(opts)
 
   local GameVersion = require("src.core.GameVersion")
   local currentVersion = GameVersion.get()
+  -- Release the 16:9 lock: the launcher owns its own 1024x768 shape.
+  require("src.core.WindowAspect").disable()
   SessionLifecycle.endGameSession(Game)
   Game = nil
   pcall(function() require("src.online.Trade").hostIsLive = nil end)
@@ -550,6 +552,12 @@ function bootGame(version, cartId, opts)
   -- from love.update's loop, so the in-engine one must stay at 1 or the
   -- two would compound (10x10 = 100 steps per observation).
   Game.speedOverride = (autopilot or driverCo) and 1 or speedOverride
+
+  -- Lock the game to 16:9 -- windowed and borderless alike.  A scripted run
+  -- sets its own window size, so leave it be.
+  if not (autopilot or driverCo) then
+    require("src.core.WindowAspect").enable()
+  end
 end
 
 local function showLauncher(version)
@@ -1103,6 +1111,14 @@ end
 function love.lowmemory()
   if editorMode or TouchEditor or Studio or Importer then return end
   if Game then Game:onResume() end
+end
+
+-- WindowAspect: while a game is running the window is locked to a fixed
+-- aspect (16:9).  Snapping it back here catches every user drag; the
+-- launcher and editor are left alone.
+function love.resize()
+  if editorMode or TouchEditor or Studio or Importer then return end
+  require("src.core.WindowAspect").onResize()
 end
 
 love.handlers = love.handlers or {}

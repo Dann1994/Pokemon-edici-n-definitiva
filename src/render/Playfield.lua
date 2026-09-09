@@ -5,6 +5,16 @@ local Playfield = {}
 
 Playfield.entered = false
 Playfield.box = nil
+-- WindowAspect: when set (a W/H ratio), the game render is confined to a
+-- centred rect of that aspect within the window/display, letterboxed.  Set
+-- only while a game is running; nil for the launcher and on mobile/NX.
+Playfield.forceAspect = nil
+
+local function fixedDisplayOS()
+  if not (love and love.system and love.system.getOS) then return false end
+  local os = love.system.getOS()
+  return os == "Android" or os == "iOS" or os == "NX"
+end
 
 local function clampRect(x, y, w, h, sw, sh)
   if type(w) ~= "number" or type(h) ~= "number" then return nil end
@@ -24,6 +34,23 @@ function Playfield.cutout(sw, sh)
   if Playfield.entered then return nil end
   if type(sw) ~= "number" or type(sh) ~= "number" then return nil end
   if sw < 1 or sh < 1 then return nil end
+  -- WindowAspect (desktop): letterbox the whole render to a fixed aspect.
+  -- Wins over the touch-skin viewport, which is mobile-only anyway.
+  local fa = Playfield.forceAspect
+  if fa and fa > 0 and not fixedDisplayOS() then
+    local w, h = sw, sh
+    if w / h > fa then
+      w = math.floor(h * fa + 0.5)
+    else
+      h = math.floor(w / fa + 0.5)
+    end
+    w = math.max(1, math.min(w, math.floor(sw)))
+    h = math.max(1, math.min(h, math.floor(sh)))
+    if w < sw or h < sh then
+      return math.floor((sw - w) / 2), math.floor((sh - h) / 2), w, h, false, false
+    end
+    return nil -- already exactly the target aspect
+  end
   if type(TouchSkin.viewport) ~= "function" then return nil end
   local ok, x, y, w, h, fill, expand = pcall(TouchSkin.viewport, sw, sh)
   if not ok then return nil end
