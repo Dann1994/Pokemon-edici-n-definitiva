@@ -54,6 +54,31 @@ local ITEM_NAME_X, ITEM_TOP_Y = 48, 32
 local ITEM_CURSOR_X = 40
 local ITEM_QTY_X, ITEM_QTY_END = 112, 136
 local ITEM_MORE_X, ITEM_MORE_Y = 144, 88
+
+-- Every x position above, generalized from the box's own (tx, ty, tw, th):
+-- classic (tx=4, tw=16) reproduces the constants above exactly (checked by
+-- tests/engine/wide_item_box.lua), so this same math draws a WIDER box too
+-- -- see wantsWideItemBox/drawItemBox below.
+local function itemGeometry(tx, ty, tw, th)
+  return {
+    tx = tx, ty = ty, tw = tw, th = th,
+    nameX = (tx + 2) * 8,
+    topY = (ty + 2) * 8,
+    cursorX = (tx + 1) * 8,
+    qtyX = (tx + tw - 6) * 8,
+    qtyEnd = (tx + tw - 3) * 8,
+    -- UI LAYOUT = WIDE only (see drawItemBox): how many of an item you
+    -- already own, in the room a wider box opens up between the name and
+    -- the price/qty column above. Own presentation -- own-invented, not a
+    -- reproduction of anything PrintListMenuEntries draws -- since this
+    -- engine carries no item description text to spend the extra width on
+    -- instead (BACKLOG.md §1.9 phase 2 explains why).
+    ownedX = (tx + tw - 12) * 8,
+    ownedEnd = (tx + tw - 9) * 8,
+    moreX = (tx + tw - 2) * 8,
+    moreY = (ty + th - 2) * 8,
+  }
+end
 -- Delay3 (home/list_menu.asm:61-64, 338-342, 47; home/window.asm:14-18)
 local SCROLL_BLANK = 3
 -- menu idles (home/window.asm:26-35, 217-263)
@@ -286,14 +311,44 @@ function ListMenu.drawBall(x, y)
   love.graphics.setColor(r, g, b, a)
 end
 
+-- UI LAYOUT = WIDE gate for the item box. Simpler than TextBox.wantsWide:
+-- that one restricts to a box sitting directly on the overworld (or another
+-- wide box chained above it) because it has to be sure a wide dialogue
+-- layer won't fight a self-composing screen for the canvas. This box's
+-- BUY/SELL/bag/PC hosts are never self-composing (none sets holdsUIAnchors
+-- except BagMenu's own list, deliberately -- see its comment: the bag box
+-- overlaps the kept-open START menu, so neither may dock or widen on its
+-- own), and Game.uiAnchorsHeldInStack already walks the WHOLE stack, battle
+-- included (BattleState.holdsUIAnchors), so it alone is the correct gate.
+local function wantsWideItemBox(self)
+  local Game = require("src.core.Game")
+  if not Game.wideUI(self.game.save) then return false end
+  if Game.uiAnchorsHeldInStack(self.game.stack) then return false end
+  local r = self.game.renderer
+  if not (r and r.wideOverworldTiles) then return false end
+  return r:wideOverworldTiles() > ITEM_BOX.tw
+end
+
 -- PrintListMenuEntries, minus the price column StartMenu_Item never asks for
 -- (wPrintItemPrices = 0, engine/menus/start_sub_menus.asm)
 function ListMenu:drawItemBox()
+  local wide = wantsWideItemBox(self)
+  local r = wide and self.game.renderer
+  local previous, w
+  if r then previous, w = r:beginWideItemPass() end
+  -- the box's left edge stays exactly where classic puts it (tx unchanged)
+  -- and only grows rightward, flush with the wide canvas's own right edge
+  -- just like the classic box is flush with the classic canvas's -- see
+  -- setWideItemAnchor's comment for why re-centering it is not safe here.
+  local g = wide
+    and itemGeometry(ITEM_BOX.tx, ITEM_BOX.ty, w / 8 - ITEM_BOX.tx, ITEM_BOX.th)
+    or itemGeometry(ITEM_BOX.tx, ITEM_BOX.ty, ITEM_BOX.tw, ITEM_BOX.th)
+
   love.graphics.setColor(1, 1, 1, 1)
-  Font.drawBox(ITEM_BOX.tx, ITEM_BOX.ty, ITEM_BOX.tw, ITEM_BOX.th)
+  Font.drawBox(g.tx, g.ty, g.tw, g.th)
   love.graphics.setColor(0, 0, 0, 1)
   if #self.items == 0 then
-    Font.draw(Strings("Nothing here."), ITEM_NAME_X, ITEM_TOP_Y)
+    Font.draw(Strings("Nothing here."), g.nameX, g.topY)
   end
   local shown, sawCancel = 0, false
   for row = 1, self.rows do
@@ -302,36 +357,54 @@ function ListMenu:drawItemBox()
     if not item then break end
     shown = shown + 1
     if item.cancel then sawCancel = true end
-    local y = ITEM_TOP_Y + (row - 1) * 16
-    Font.draw(item.label, ITEM_NAME_X, y)
+    local y = g.topY + (row - 1) * 16
+    Font.draw(item.label, g.nameX, y)
     if item.sub then
       -- PrintLevel, one row down and 8 columns right (home/list_menu.asm:459-461)
-      Font.draw(item.sub, ITEM_QTY_X, y + 8)
+      Font.draw(item.sub, g.qtyX, y + 8)
     elseif item.price then
       -- home/list_menu.asm:410-424
-      Font.draw(item.price, ITEM_QTY_END - Font.width(item.price), y + 8)
+      Font.draw(item.price, g.qtyEnd - Font.width(item.price), y + 8)
     elseif item.count then
       -- '×' at column 14, PrintNumber's two right-aligned digits after it
       -- (home/list_menu.asm:479-490)
       local count = tostring(item.count)
-      Font.draw("\xc3\x97", ITEM_QTY_X, y + 8)
-      Font.draw(count, ITEM_QTY_END - Font.width(count), y + 8)
+      Font.draw("\xc3\x97", g.qtyX, y + 8)
+      Font.draw(count, g.qtyEnd - Font.width(count), y + 8)
     elseif item.right then
-      Font.draw(item.right, ITEM_QTY_END - Font.width(item.right), y + 8)
+      Font.draw(item.right, g.qtyEnd - Font.width(item.right), y + 8)
+    end
+    -- UI LAYOUT = WIDE only: units already owned (see ownedX's comment)
+    if wide and item.owned and item.owned > 0 then
+      local owned = tostring(item.owned)
+      love.graphics.setColor(0.4, 0.4, 0.4, 1)
+      Font.draw("\xc3\x97", g.ownedX, y + 8)
+      Font.draw(owned, g.ownedEnd - Font.width(owned), y + 8)
+      love.graphics.setColor(0, 0, 0, 1)
     end
     if i == self.index and (self.cursorBlank or 0) == 0 then
       Font.drawCode(self.hollowIndex == i
-                    and Theme.cursorHollow or Theme.cursor, ITEM_CURSOR_X, y)
+                    and Theme.cursorHollow or Theme.cursor, g.cursorX, y)
     end
     if self.swapIndex == i and i ~= self.index then
-      Font.drawCode(Theme.cursorHollow, ITEM_CURSOR_X, y)
+      Font.drawCode(Theme.cursorHollow, g.cursorX, y)
     end
   end
   -- the terminator prints CANCEL and returns before the '▼'
   -- (home/list_menu.asm:372, 518-524)
   if shown == self.rows and not sawCancel
      and (self.arrowBlink or 0) < ARROW_BLINK_ON then
-    Font.drawCode(Theme.moreArrow, ITEM_MORE_X, ITEM_MORE_Y)
+    Font.drawCode(Theme.moreArrow, g.moreX, g.moreY)
+  end
+  love.graphics.setColor(1, 1, 1, 1)
+  if r then
+    -- the bottom text box (below) is the classic 160-wide one PC prompts
+    -- and the shop clerk already dock through their own paths -- it has no
+    -- wide treatment of its own, so it draws AFTER the wide canvas is
+    -- closed out, straight onto the ordinary classic UI canvas, exactly
+    -- where it always has.
+    r:endWideItemPass(previous)
+    r:setWideItemAnchor(0, g.ty * 8, w, r.HEIGHT)
   end
   -- players_pc.asm:97/151/205 PrintText the prompt before DisplayListMenuID,
   -- so the bottom box sits under the list from the first frame

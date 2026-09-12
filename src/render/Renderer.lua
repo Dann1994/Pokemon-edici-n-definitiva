@@ -328,6 +328,53 @@ function Renderer:setWideDialogueAnchor(x, y, w, h)
   }
 end
 
+-- UI LAYOUT = WIDE (item lists: the bag/shop/PC box -- ListMenu:drawItemBox).
+-- Same "own scratch surface at the playfield's tile width" idea as the
+-- dialogue pass above. Anchored "top": the box's own left edge stays
+-- exactly where CENTERED already puts it (glued to the classic letterbox's
+-- left edge, not re-centred in the wider viewport) and only grows
+-- RIGHTWARD, because several of this box's hosts -- the shop, most
+-- visibly -- keep their OWN menu open behind the list (ShopMenu's
+-- BUY/SELL/QUIT box + money widget peek above every item list, the same
+-- way BagMenu's kept-open START menu does above the bag's). That parent box
+-- draws at classic coordinates and was never going anywhere; re-centering
+-- the list in a wider canvas would have literally pulled it out from under
+-- what it is supposed to sit inside of, uncovering stale glyphs down the
+-- left edge. A distinct canvas from wideDialogueCanvas: unlike a TextBox
+-- chained under a ChoiceBox, an item list and a dialogue box never need to
+-- composite onto the very same surface, and giving each its own avoids one
+-- clobbering the other's contents on a frame both happen to draw.
+function Renderer:beginWideItemPass()
+  local w = self:wideOverworldTiles() * 8
+  local h = self.HEIGHT
+  if not self.wideItemCanvas
+     or self.wideItemCanvas:getWidth() ~= w
+     or self.wideItemCanvas:getHeight() ~= h then
+    if self.wideItemCanvas and self.wideItemCanvas.release then
+      self.wideItemCanvas:release()
+    end
+    self.wideItemCanvas = PixelCanvas.new(w, h, "nearest")
+  end
+  local previous = (love.graphics.getCanvas and love.graphics.getCanvas())
+    or self.canvas
+  love.graphics.setCanvas(self.wideItemCanvas)
+  love.graphics.clear(0, 0, 0, 0)
+  return previous, w, h
+end
+
+function Renderer:endWideItemPass(previous)
+  love.graphics.setCanvas(previous or self.canvas)
+end
+
+function Renderer:setWideItemAnchor(x, y, w, h)
+  if self.uiAnchorHold then return end
+  self.uiAnchors = self.uiAnchors or {}
+  self.uiAnchors[#self.uiAnchors + 1] = {
+    x = x, y = y, w = w, h = h, anchor = "top",
+    windowClamped = true, canvas = self.wideItemCanvas, extract = false,
+  }
+end
+
 -- LOVE-unit draw scales endFrame uses for the UI blit: integer framebuffer
 -- scale (fitScale) divided by each axis's unit→pixel factor, so a GB pixel
 -- lands on fitScale() whole PHYSICAL pixels on both axes once LOVE applies

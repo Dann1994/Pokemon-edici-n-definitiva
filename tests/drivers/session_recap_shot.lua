@@ -1,8 +1,10 @@
--- Visual check for this session's two additions:
+-- Visual check for this session's additions:
 --   (1) the field-move A-press prompt (SURF), OPTIONS -> EXTRAS -> FIELD
 --       MOVE PROMPT (src/world/OverworldController.lua:tryFieldMovePrompt)
 --   (2) the UI LAYOUT = WIDE party-menu side panel
 --       (src/ui/PartyMenu.lua:drawPanel)
+--   (3) the UI LAYOUT = WIDE bag/shop/PC item box, phase 2 of §1.9
+--       (src/ui/ListMenu.lua:drawItemBox, the BUY list's owned-count column)
 --   SHOT_DIR=<dir> POKEPORT_DRIVER=tests/drivers/session_recap_shot.lua \
 --     "love" . --game=red
 local U = require("tests.drivers.util")
@@ -51,6 +53,23 @@ return function(game)
   pm.index = 4 -- PIKACHU: ELÉCTRICO is the longest Spanish type name (9)
   U.wait(10)
   U.shot(game, DIR .. "/4_party_wide_panel_pikachu.png")
+
+  -- ------------------------------------------------- (3) wide shop item box
+  -- Viridian Mart's actual stock (data/scripts): a mix of long and short
+  -- names, one already partly owned (POTION) and one not (PARLYZ_HEAL, so
+  -- a row with no owned column proves the wide box doesn't fake one).
+  game.save.money = 3000
+  game.save.inventory = { POTION = 5, POKE_BALL = 12 }
+  local ShopMenu = require("src.ui.ShopMenu")
+  while game.stack:top() do game.stack:pop() end
+  local mart = ShopMenu.new(game, {
+    "POKE_BALL", "POTION", "ANTIDOTE", "PARLYZ_HEAL", "BURN_HEAL",
+  }, function() end)
+  game.stack:push(mart)
+  U.wait(5)
+  U.tap(game, "a") -- BUY (index 1 by default)
+  U.wait(20)
+  U.shot(game, DIR .. "/5_shop_wide_item_box.png")
 
   U.log("SESSION_RECAP_SHOT_DONE")
   love.event.quit()

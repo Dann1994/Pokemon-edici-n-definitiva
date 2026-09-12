@@ -46,6 +46,9 @@ local function buy(game, stock, menu)
         value = id,
         label = def.name,
         price = ("¥%d"):format(def.price),
+        -- UI LAYOUT = WIDE only (ListMenu:drawItemBox): how many the player
+        -- already has, real inventory data rather than invented flavor text
+        owned = game.save.inventory[id],
       })
     end
   end
@@ -98,6 +101,10 @@ local function buy(game, stock, menu)
               return
             end
             game.save.money = game.save.money - cost
+            -- keep the wide box's owned-count column live across a
+            -- purchase without needing the whole list rebuilt (mirrors
+            -- how sell(), below, updates item.count after a sale)
+            item.owned = game.save.inventory[item.value]
             -- SFX_PURCHASE drains before the receipt -- pokemart.asm:193
             game.stack:push(TextBox.new(game,
               txt(game, "_PokemartBoughtItemText",
