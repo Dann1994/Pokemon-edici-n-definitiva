@@ -22,6 +22,7 @@ Convención de vías: **[opción]** = ya existe como ajuste · **[mod]** = vía 
 | 1.5 | Título: "Red Version" → "EDICIÓN DEFINITIVA" | [mod] `field.boot.title.versionRibbon` | HECHO | `mods/pokered_plus` v0.5.0. `tools/pokered_plus_title_ribbon.py` genera la tira 1-bit (fuente Plain Pixel) en `assets/title/`; `TitleState` la centra en y=64 y la colorea con la paleta LOGO1 (roja en el título de Red). |
 | 1.4 | Sprites de Pokémon de Amarillo sobre Red | [datos] overlay de cache | HECHO | `scripts/pokered_plus_yellow_gfx.lua` copia los 305 PNGs de batalla de Yellow sobre el cache de Red y ajusta `frontSize` de las 7 especies que cambiaron de tamaño. **Re-ejecutar tras cada re-importación de Red.** `--revert` para deshacer. |
 | 1.8 | **Aviso de MO al interactuar** (estilo remakes de 3ª gen) | [fuente] `OverworldController.lua` + `SaveData.lua` | HECHO | Al acercarse al agua o a un árbol cortable y tocar A, pregunta directo "¿Quieres usar SURF/CORTE?" en vez de exigir el submenú de MO del menú de equipo. Cablea primitivas que ya existían sin usar (`useSurfFieldMove/useCutFieldMove/trySurf/tryCut/stopSurfing`) al único A-press hook que pokered nunca tuvo (`OverworldState:tryFieldMovePrompt`). Sin insignia / nada que cortar / sin agua → rechazo silencioso, nunca insiste. Opción **FIELD MOVE PROMPT** en OPCIONES → EXTRAS (por defecto ON). Test `field_move_prompt.lua` 18/18. |
+| 1.9 | **Menús a pantalla ancha** (rediseño estilo remakes 3ª gen) | [fuente] `PartyMenu.lua` / `ListMenu.lua` / `BoxMenu.lua` | EN CURSO | Decisión tomada: rediseño de contenido, no solo estético (ver `Pendiente` más abajo). **Fase 1 (equipo) HECHA**: con UI LAYOUT = WIDE, el menú de selección de Pokémon suma un panel lateral propio en los 144px extra (mismo total de 304px que la batalla ancha) con el sprite, nivel, ATAQUE/DEFENSA/VELOCIDAD/ESPECIAL y TIPO1/TIPO2 del Pokémon resaltado — diseño propio (no reproduce SummaryMenu, que sigue siendo la pantalla de estado real de dos páginas), inactivo fuera de UI LAYOUT = WIDE y fuera de un menú de equipo abierto DURANTE una batalla ancha (ese sigue centrado clásico dentro de la superficie de la batalla). `PartyMenu:uiSize/wantsPanel/drawPanel`, zona SGB del sprite del panel. Test `party_wide_panel.lua` 13/13, suite completa sin regresiones nuevas (14 fallos preexistentes, iguales antes y después). **Fase 2 (tienda) y 3 (PC/caja) pendientes** — ver notas de alcance en `Pendiente`. |
 
 ## 2. Tipos y tabla de tipos
 
@@ -161,8 +162,21 @@ Catálogo — decidir cuáles activar por defecto:
 ### De mí (implementar)
 1. **§7.2** — pulido visual del mapa de la Isla Suprema (cuando el usuario lo edite en Tiled
    y me pase el export) + integrar ese export en `mods/mew_event/data/isla_suprema.lua`.
-2. **EN CURSO** — ensanchar a pantalla ancha los menús de selección: equipo/Pokémon (`PartyMenu`),
-   tienda (`ShopMenu`), PC/caja y otros que hoy quedan angostos en el centro de la ventana panorámica.
+2. **§1.9 — Fase 2 (tienda)**: `ShopMenu.lua` usa `ListMenu.lua` (genérico, también detrás de
+   la bolsa, la PC y la Pokédex) en modo `itemBox`. Ensanchar ESE modo beneficia a varias
+   pantallas de una — ya identifiqué el punto de apalancamiento. **Hallazgo importante**: este
+   motor **no tiene datos de descripción de objetos** en ningún lado (`game.data.items[id]` no
+   trae ese campo) — el remake de 3ª gen que el usuario pidió como referencia SÍ muestra una
+   descripción al resaltar el objeto, pero esa descripción sería el texto oficial de Nintendo
+   → mismo límite que ya se aplicó a la localización y a los movimientos de Gen 2/3 (no lo
+   reconstruyo). Decisión tomada sin volver a preguntar (consistente con esa política ya
+   establecida): en vez de texto de Nintendo, la fase 2 va a mostrar **cuántas unidades ya
+   tenés** de cada objeto en la lista (dato real de `game.save.inventory`, no inventado),
+   estilo remake, en la columna extra. Si el usuario prefiere que además escriba descripciones
+   **propias** (mecánicas, en una línea, sacadas de lo que `ItemEffects.lua` hace realmente,
+   no de Nintendo), lo agrego — que lo pida.
+3. **§1.9 — Fase 3 (PC/caja)**: `BoxMenu.lua`, mismo patrón de panel lateral que la Fase 1
+   (sprite + tipo del Pokémon resaltado en la caja).
 
 ### De vos (decisión / prueba)
 3. **§7.2 / §7.3** — playtest real en el juego: (Mew) Mansión → Fuji → marinero → isla → Mew;
