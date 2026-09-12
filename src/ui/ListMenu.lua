@@ -283,20 +283,50 @@ function ListMenu:close()
   if top == self then self.game.stack:pop() end
 end
 
+-- UI LAYOUT = WIDE gate for the bottom message box. Unlike drawItemBox's
+-- own gate, nothing is kept open behind THIS box -- it sits at the very
+-- bottom (rows 12-17), while a host's own kept-open menu (ShopMenu's
+-- BUY/SELL/QUIT, say) lives up near the top -- so it can dock flush to the
+-- window edge exactly like the overworld's dialogue box, through that same
+-- scratch canvas (beginWideDialoguePass): the two never draw in the same
+-- frame in a way that would fight over it.
+local function wantsWideMessageBox(self)
+  local Game = require("src.core.Game")
+  if not Game.wideUI(self.game.save) then return false end
+  if Game.uiAnchorsHeldInStack(self.game.stack) then return false end
+  local r = self.game.renderer
+  if not (r and r.wideOverworldTiles) then return false end
+  return r:wideOverworldTiles() > 20
+end
+
 -- standard bottom text box (PrintText); long prompts wrap and keep
 -- their last two lines, like the GB's scrolled box (#115/#174)
 local function drawMessageBox(self)
-  Font.drawBox(0, 12, 20, 6)
+  local wide = wantsWideMessageBox(self)
+  local r = wide and self.game.renderer
+  local previous, w
+  if r then previous, w = r:beginWideDialoguePass() end
+  Font.drawBox(0, 12, wide and (w / 8) or 20, 6)
   love.graphics.setColor(0, 0, 0, 1)
-  if not self.footer then return end
-  local flat = {}
-  for _, page in ipairs(require("src.render.TextBox").paginate(self.footer)) do
-    for _, line in ipairs(page) do flat[#flat + 1] = line end
+  if self.footer then
+    local flat = {}
+    -- wide: the same wider budget TextBox.new gives an overworld box
+    -- (tiles - 2, see its own comment) so a long footer wraps later
+    -- instead of breaking at the classic 18-column width inside a box
+    -- that is visibly wider than that now
+    local maxCols = wide and (w / 8 - 2) or nil
+    for _, page in ipairs(require("src.render.TextBox").paginate(self.footer, maxCols)) do
+      for _, line in ipairs(page) do flat[#flat + 1] = line end
+    end
+    local y = 112
+    for i = math.max(1, #flat - 1), #flat do
+      Font.draw(flat[i], 8, y)
+      y = y + 16
+    end
   end
-  local y = 112
-  for i = math.max(1, #flat - 1), #flat do
-    Font.draw(flat[i], 8, y)
-    y = y + 16
+  if r then
+    r:endWideDialoguePass(previous)
+    r:setWideDialogueAnchor(0, 96, w, 48)
   end
 end
 
@@ -325,8 +355,8 @@ local function wantsWideItemBox(self)
   if not Game.wideUI(self.game.save) then return false end
   if Game.uiAnchorsHeldInStack(self.game.stack) then return false end
   local r = self.game.renderer
-  if not (r and r.wideOverworldTiles) then return false end
-  return r:wideOverworldTiles() > ITEM_BOX.tw
+  if not (r and r.wideItemTiles) then return false end
+  return r:wideItemTiles() > ITEM_BOX.tw
 end
 
 -- PrintListMenuEntries, minus the price column StartMenu_Item never asks for

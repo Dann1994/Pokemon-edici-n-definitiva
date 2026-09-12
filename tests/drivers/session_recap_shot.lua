@@ -71,6 +71,21 @@ return function(game)
   U.wait(20)
   U.shot(game, DIR .. "/5_shop_wide_item_box.png")
 
+  -- same scene, UI LAYOUT = CENTERED: sanity check that the sliver of
+  -- BUY/SELL/QUIT peeking on the left of the item box (tx=4's classic
+  -- inset) is pre-existing and not something the wide pass introduced
+  game.save.options.uiLayout = "centered"
+  while game.stack:top() do game.stack:pop() end
+  local mart2 = ShopMenu.new(game, {
+    "POKE_BALL", "POTION", "ANTIDOTE", "PARLYZ_HEAL", "BURN_HEAL",
+  }, function() end)
+  game.stack:push(mart2)
+  U.wait(5)
+  U.tap(game, "a")
+  U.wait(20)
+  U.shot(game, DIR .. "/6_shop_classic_item_box.png")
+  game.save.options.uiLayout = "wide"
+
   U.log("SESSION_RECAP_SHOT_DONE")
   love.event.quit()
 end

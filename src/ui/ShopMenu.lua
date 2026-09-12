@@ -228,6 +228,21 @@ local function sell(game, menu)
   game.stack:push(list)
 end
 
+-- UI LAYOUT = WIDE gate for the clerk's own bottom box, same reasoning as
+-- ListMenu's drawMessageBox (which draws the identical box once a BUY/SELL
+-- list is open over this menu -- this copy is only what shows before that,
+-- the initial greeting): nothing is kept open behind a bottom-row box, so
+-- it can dock flush to the window edge through the shared wide dialogue
+-- scratch canvas.
+local function wantsWide(game)
+  local Game = require("src.core.Game")
+  if not Game.wideUI(game.save) then return false end
+  if Game.uiAnchorsHeldInStack(game.stack) then return false end
+  local r = game.renderer
+  if not (r and r.wideOverworldTiles) then return false end
+  return r:wideOverworldTiles() > 20
+end
+
 -- MONEY_BOX 11,0 (data/text_boxes.asm:35) over the greeting PrintText left
 -- in the bottom box (home/text_script.asm:143)
 local function drawClerk(menu)
@@ -241,11 +256,17 @@ local function drawClerk(menu)
   local money = ("¥%d"):format((game.save and game.save.money) or 0)
   Font.draw(money, 152 - Font.width(money), 8)
   love.graphics.setColor(1, 1, 1, 1)
-  Font.drawBox(0, 12, 20, 6)
+
+  local wide = wantsWide(game)
+  local r = wide and game.renderer
+  local previous, w
+  if r then previous, w = r:beginWideDialoguePass() end
+  Font.drawBox(0, 12, wide and (w / 8) or 20, 6)
   love.graphics.setColor(0, 0, 0, 1)
   if menu.footer then
     local flat = {}
-    for _, page in ipairs(TextBox.paginate(menu.footer)) do
+    local maxCols = wide and (w / 8 - 2) or nil
+    for _, page in ipairs(TextBox.paginate(menu.footer, maxCols)) do
       for _, line in ipairs(page) do flat[#flat + 1] = line end
     end
     local y = 112
@@ -255,6 +276,10 @@ local function drawClerk(menu)
     end
   end
   love.graphics.setColor(1, 1, 1, 1)
+  if r then
+    r:endWideDialoguePass(previous)
+    r:setWideDialogueAnchor(0, 96, w, 48)
+  end
 end
 
 function ShopMenu.new(game, stock, onQuit)

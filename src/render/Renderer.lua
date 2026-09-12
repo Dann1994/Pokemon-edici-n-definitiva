@@ -285,6 +285,28 @@ function Renderer:wideOverworldTiles()
   return tiles
 end
 
+-- UI LAYOUT = WIDE item box (ListMenu:drawItemBox): a DIFFERENT budget from
+-- wideOverworldTiles above. That one sizes a box meant to sit flush with the
+-- VIEWPORT (dx = vux, like the dialogue box's "bottomwide" anchor) -- but
+-- the item box anchors "top" instead, its left edge glued to the classic
+-- LETTERBOX's own origin (uox), which is offset from vux by however wide
+-- CENTERED's letterbox bars are (see setWideItemAnchor's comment for why it
+-- cannot re-center like the dialogue box does). Sizing that box off the
+-- FULL viewport width the way wideOverworldTiles does ran the box past the
+-- window's right edge by exactly that offset -- it looked clipped because
+-- it genuinely was, past vux+vuw where clipToView cuts it off. This budgets
+-- only the room actually left between uox and the viewport's right edge.
+function Renderer:wideItemTiles()
+  local r = self:frameRects()
+  if r.Ux <= 0 then return self.WIDTH / 8 end
+  local available = (r.vux + r.vuw) - r.uox
+  local tiles = math.floor(available / r.Ux / 8 + 0.5)
+  local maxT = math.floor(self.MAX_UI_WIDTH / 8)
+  if tiles < self.WIDTH / 8 then tiles = self.WIDTH / 8 end
+  if tiles > maxT then tiles = maxT end
+  return tiles
+end
+
 function Renderer:wideDialogueActive()
   return self.wideDialogueCanvas ~= nil and self.wideDialogueDirty
 end
@@ -345,7 +367,7 @@ end
 -- composite onto the very same surface, and giving each its own avoids one
 -- clobbering the other's contents on a frame both happen to draw.
 function Renderer:beginWideItemPass()
-  local w = self:wideOverworldTiles() * 8
+  local w = self:wideItemTiles() * 8
   local h = self.HEIGHT
   if not self.wideItemCanvas
      or self.wideItemCanvas:getWidth() ~= w

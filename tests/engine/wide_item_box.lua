@@ -22,6 +22,39 @@ love = love or require("tests.love_stub")
 -- real Renderer's anchor")
 local Renderer = require("src.render.Renderer")
 
+-- ------------------------------------------------------- wideItemTiles
+
+-- A window WIDE enough that CENTERED's own letterbox leaves a real gap
+-- between the viewport's left edge and the classic canvas's (uox > vux):
+-- a 16:9 window is exactly what WindowAspect.lua locks the real game into.
+-- wideOverworldTiles sizes a box meant to sit flush with the VIEWPORT
+-- (dx = vux); reusing that budget for THIS box -- anchored "top", glued to
+-- uox instead -- ran it past the window's right edge by exactly that gap,
+-- which is the clipping a screenshot caught (#wide-item-box-clip).
+do
+  local g = love.graphics
+  local realDims, realPixelDims = g.getDimensions, g.getPixelDimensions
+  g.getDimensions = function() return 1920, 1080 end
+  g.getPixelDimensions = function() return 1920, 1080 end
+
+  local overworldTiles = Renderer:wideOverworldTiles()
+  local itemTiles = Renderer:wideItemTiles()
+  check(overworldTiles > 20, "sanity: this window does widen the dialogue box")
+  check(itemTiles < overworldTiles,
+    "the item box's own budget is SMALLER -- it starts further right (uox), "
+    .. "so it has less room left before the viewport's edge")
+
+  -- the box itself never overflows past the viewport: uox (where it starts)
+  -- plus its own width (itemTiles tiles, at the UI scale) must land at or
+  -- before vux + vuw (where CENTERED's letterbox mirror-gap begins again)
+  local r = Renderer:frameRects()
+  local dw = itemTiles * 8 * r.Ux
+  check(r.uox + dw <= r.vux + r.vuw + 0.01,
+    "so a box anchored at uox with that width fits inside the viewport")
+
+  g.getDimensions, g.getPixelDimensions = realDims, realPixelDims
+end
+
 local realFont = package.loaded["src.render.Font"]
 local calls = {}
 local FontStub
@@ -60,7 +93,7 @@ local anchorCalls
 local function fakeRenderer(tiles)
   return {
     HEIGHT = 144,
-    wideOverworldTiles = function() return tiles end,
+    wideItemTiles = function() return tiles end,
     beginWideItemPass = function(self)
       return "prev-canvas", tiles * 8, 144
     end,
