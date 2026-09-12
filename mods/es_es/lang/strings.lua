@@ -4,6 +4,10 @@
 -- an entry empty. Keep any %s / %d directives.
 
 return {
+  -- pokered-plus: FIELD MOVE PROMPT (src/world/OverworldController.lua)
+  ["FIELD MOVE PROMPT"] = "AVISO DE MOVIMIENTOS",
+  ["Want to get\noff the water?"] = "¿Quieres bajarte\ndel agua?",
+  ["Want to use\nCUT?"] = "¿Quieres usar\nCORTE?",
   ["%s\nflew up high!"] = "¡%s voló\nmuy alto!",
   ["%s\ndug a hole!"] = "¡%s cavó\nun hoyo!",
   ["%s\nmade a whirlwind!"] = "¡%s formó\nun torbellino!",

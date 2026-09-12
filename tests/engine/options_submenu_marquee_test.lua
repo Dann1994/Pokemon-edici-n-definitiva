@@ -87,8 +87,8 @@ game.stack:pop()
 
 local extras = find(menu.view, "group.extras")
 extras.activate(game)
-T.eq(ids(game.stack:top().view), "tilt,zoom,voidFill",
-  "EXTRAS carries TILT, ZOOM and VOID FILL")
+T.eq(ids(game.stack:top().view), "fieldMovePrompt,tilt,zoom,voidFill",
+  "EXTRAS carries FIELD MOVE PROMPT, TILT, ZOOM and VOID FILL")
 game.stack:pop()
 
 local video = find(menu.view, "group.video")

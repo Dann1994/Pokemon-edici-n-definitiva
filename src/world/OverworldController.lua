@@ -2417,13 +2417,12 @@ function OverworldState:interact()
     return
   end
 
-  -- No overworld A-press hook for field moves: pokered has no such hook
-  -- anywhere -- CUT and SURF (like FLY/FLASH/DIG/TELEPORT/STRENGTH) are
-  -- only ever chosen from the party menu's per-mon field-move submenu
-  -- (start_sub_menus.asm .outOfBattleMovePointers), and only succeed if
-  -- the player happens to be facing a cuttable tree / water at the moment
-  -- of selection.  See PartyMenu's cut/surf actions -> useCutFieldMove /
-  -- useSurfFieldMove below.
+  -- pokered-plus FIELD MOVE PROMPT (opt-out, save.options.fieldMovePrompt):
+  -- the one A-press hook pokered never had -- see tryFieldMovePrompt below.
+  if self:tryFieldMovePrompt(fx, fy) then
+    interacted(self, fx, fy, "fieldmove")
+    return
+  end
 
   -- map-script interact hook (hand-ported hidden events like the
   -- museum fossil exhibits)
@@ -3046,6 +3045,43 @@ function OverworldState:surfBlockedHere()
       end
       if not cleared then return true end
     end
+  end
+  return false
+end
+
+-- pokered-plus FIELD MOVE PROMPT (Gen 3 remake style): facing a cuttable
+-- tree or the water's edge and pressing A offers the move directly, the way
+-- FRLG/RSE's field-move popup does, instead of requiring the PARTY menu's
+-- per-mon submenu every time.  Reuses the exact same gates and actions that
+-- submenu calls (useSurfFieldMove/useCutFieldMove, trySurf/tryCut/
+-- stopSurfing) -- this only changes how they are reached, not what they do.
+-- Only "ok" (mount / cut) and "dismount" (get off) ever show a prompt: a
+-- missing badge, no mon that knows the move, or nothing cuttable/no water
+-- underfoot all refuse silently, so a stray A-press against a plain tree or
+-- wall never nags about badges you don't have yet.
+function OverworldState:tryFieldMovePrompt(fx, fy)
+  local options = Game.save and Game.save.options
+  if options and options.fieldMovePrompt == false then return false end
+  local surf = self:useSurfFieldMove()
+  if surf == "ok" or surf == "dismount" then
+    local prompt = surf == "dismount"
+      and Strings("Want to get\noff the water?")
+      or Strings("The water is calm.\nWant to SURF?")
+    Game.stack:push(TextBox.new(Game, prompt, nil, {
+      choice = function(yes)
+        if not yes then return end
+        if surf == "ok" then self:trySurf(fx, fy) else self:stopSurfing() end
+      end,
+    }))
+    return true
+  end
+  if self:useCutFieldMove() == "ok" then
+    Game.stack:push(TextBox.new(Game, Strings("Want to use\nCUT?"), nil, {
+      choice = function(yes)
+        if yes then self:tryCut(fx, fy) end
+      end,
+    }))
+    return true
   end
   return false
 end

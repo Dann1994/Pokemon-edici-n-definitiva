@@ -188,6 +188,18 @@ local function buildRows(game)
         o.animations = o.animations == false and true or false
         return true
       end },
+    -- pokered-plus: facing a cuttable tree / the water's edge and pressing A
+    -- offers CUT/SURF directly (Gen 3 remake style) instead of requiring the
+    -- PARTY menu's per-mon field-move submenu every time.
+    { id = "fieldMovePrompt", label = Strings("FIELD MOVE PROMPT"),
+      value = function(g)
+        return g.save.options.fieldMovePrompt == false and Strings("OFF") or Strings("ON")
+      end,
+      step = function(g)
+        local o = g.save.options
+        o.fieldMovePrompt = o.fieldMovePrompt == false
+        return true
+      end },
     { id = "battleStyle", label = Strings("BATTLE STYLE"),
       value = function(g)
         return g.save.options.battleStyle == "set" and Strings("SET") or Strings("SHIFT")
@@ -738,7 +750,7 @@ local GROUPS = {
   -- A mod's Pipelines row splices in after TILT and is in no group, so it
   -- stays on the top level rather than being swallowed into this page.
   { id = "group.extras", label = "EXTRAS",
-    members = { "tilt", "zoom", "voidFill" } },
+    members = { "tilt", "zoom", "voidFill", "fieldMovePrompt" } },
 }
 
 -- The top level's order, groups and singles alike.  Anything not named here

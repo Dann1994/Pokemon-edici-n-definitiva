@@ -267,6 +267,13 @@ function SaveData.defaultOptions()
     textSpeed = 1,
     animations = true,
     battleStyle = "shift",
+    -- pokered-plus: FIELD MOVE PROMPT (Gen 3 remake style). Facing a
+    -- cuttable tree or the water's edge and pressing A asks "Want to use
+    -- CUT/SURF?" instead of requiring the PARTY menu's per-mon field-move
+    -- submenu (src/world/OverworldController.lua:tryFieldMovePrompt). Off
+    -- only refuses silently (no badge, nothing to cut/no water): this never
+    -- nags, it only ever offers something that would actually work.
+    fieldMovePrompt = true,
     -- battle screen composition: og (the 160x144 original) | wide
     -- (304x144, src/battle/WideBattle.lua)
     -- pokered-plus: widescreen by default. Escape hatch: branch `stock-defaults`.
