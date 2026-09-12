@@ -20,6 +20,58 @@ local FieldDefaults = require("src.world.FieldDefaults")
 local Map = require("src.world.Map")
 local Strings = require("src.core.Strings")
 local Status = require("src.battle.Status")
+-- UI LAYOUT = WIDE side panel (PartyMenu:drawPanel): reuses the same
+-- window-aspect surface math as the wide battle layout, at the same 304px
+-- baseline, so the extra width lands at the same physical size either
+-- screen. WideBattle.dims ignores its `battle` argument entirely, so
+-- calling it with none is exactly the same computation.
+local WideBattle = require("src.battle.WideBattle")
+
+-- UI LAYOUT = WIDE: a condensed "status" panel for the highlighted mon,
+-- own design (not a reproduction of any Gen 1 or later screen -- Gen 1's
+-- real status screen is SummaryMenu.lua, a separate two-page A-press
+-- screen this does NOT replace), drawn in the extra width the wide surface
+-- buys past the classic 160px list. Same idea as a Gen 3+ remake's party
+-- screen showing more at a glance, sized to fit next to the untouched
+-- classic list rather than reflowing it.
+local PANEL_X = 160
+local PANEL_W = WideBattle.WIDTH - PANEL_X -- 144, same total width as WideBattle
+
+local panelSpriteImages = {}
+
+-- The panel's front sprite, cached by path like PartyMenu.drawIcon's own
+-- iconImages cache further down. Shared between drawPanel (draws it) and
+-- sgbPalettes (zones its rect to the mon's own palette when it isn't
+-- true-color art) so the two never disagree about where it landed.
+local function panelSpriteImage(game, mon)
+  local Sprites = require("src.pokemon.Sprites")
+  local path, trueColor = Sprites.path(game.data, mon.species, "front",
+    { mon = mon, kind = "summary" })
+  if not path then return nil end
+  local img = panelSpriteImages[path]
+  if img == nil then
+    local ok, loaded = pcall(love.graphics.newImage, path)
+    img = ok and loaded or false
+    panelSpriteImages[path] = img
+  end
+  if not img then return nil end
+  return img, trueColor
+end
+
+-- Right-aligned inside the panel, mirroring how SummaryMenu anchors its own
+-- pic to its box's right edge. Scaled down (never up) to at most 64px tall
+-- so an oversized species (Onix, Gyarados...) cannot run into the stat box
+-- below it; returns the drawn rect AND the scale factor draw() needs to
+-- pass through, so a shrunk pic still reports its true on-screen size to
+-- the sgbPalettes zone.
+local function panelSpriteRect(img)
+  local iw, ih = img:getDimensions()
+  local scale = ih > 64 and 64 / ih or 1
+  local pw, ph = iw * scale, ih * scale
+  local px = PANEL_X + PANEL_W - pw - 8
+  local py = math.max(8, 64 - ph)
+  return px, py, pw, ph, scale
+end
 
 local PartyMenu = {}
 PartyMenu.__index = PartyMenu
@@ -69,7 +121,47 @@ function PartyMenu:sgbPalettes(game)
       end
     end
   end
+  -- UI LAYOUT = WIDE: the panel's own sprite, in the highlighted mon's own
+  -- palette (like SummaryMenu's P.zone(P.monPal(...), 1, 0, 7, 6)) -- true
+  -- color art sits out the zone the same way SummaryMenu's does, via
+  -- markTrueColor at draw time instead.
+  if self:wantsPanel() then
+    local party = self.party or (game.save and game.save.party) or {}
+    local mon = party[self.index]
+    if mon then
+      local img, trueColor = panelSpriteImage(game, mon)
+      if img and not trueColor then
+        local pal = P.monPal(game.data, mon.species)
+        if pal then
+          local px, py, pw, ph = panelSpriteRect(img)
+          zones[#zones + 1] = P.zone(pal, math.floor(px / 8), math.floor(py / 8),
+            math.ceil((px + pw) / 8) - 1, math.ceil((py + ph) / 8) - 1)
+        end
+      end
+    end
+  end
   return zones
+end
+
+-- Renderer:setUISize asks the top state for its surface before anything
+-- draws (see BattleState:uiSize, the same idiom). Off (classic 160x144)
+-- unless UI LAYOUT = WIDE is on -- the option this panel is part of.
+function PartyMenu:uiSize()
+  local Game = require("src.core.Game")
+  if not Game.wideUI(self.game.save) then return 160, 144 end
+  return WideBattle.dims()
+end
+
+-- The panel only draws when this menu actually owns the wide surface: a
+-- party menu opened DURING a wide battle stays inside that battle's own
+-- 304px surface, centred at classic coordinates (Game:draw's classicOffset
+-- branch) instead of consulting uiSize() at all, so PANEL_X=160 would not
+-- land where this menu's own content actually is.
+function PartyMenu:wantsPanel()
+  local Game = require("src.core.Game")
+  if not Game.wideUI(self.game.save) then return false end
+  if Game.wideBattleInStack(self.game.stack) then return false end
+  return true
 end
 
 -- data/moves/field_moves.asm: leftmost tile per field move name
@@ -963,6 +1055,70 @@ function PartyMenu:draw()
       Font.draw(entry.label, (lx + 1) * 8, y0 + (si - 1) * 16)
     end
     Font.drawCode(Theme.cursor, lx * 8, y0 + (self.subIndex - 1) * 16)
+  end
+  love.graphics.setColor(1, 1, 1, 1)
+  if self:wantsPanel() then self:drawPanel() end
+end
+
+-- UI LAYOUT = WIDE: condensed status panel for the highlighted mon (see
+-- the comment over PANEL_X above). Sits at a fixed 144px past the classic
+-- list, the same width WideBattle adds, so it reads as the same "extra
+-- room" the player already knows from a wide battle. The canvas is already
+-- cleared white out to the full wide surface width by Renderer:beginFrame
+-- (an opaque state clears (1,1,1,1) across the whole allocated canvas, not
+-- just 0..160), so there is no background rectangle to draw here -- only
+-- content.
+function PartyMenu:drawPanel()
+  local game = self.game
+  local party = self.party or game.save.party
+  local mon = party[self.index]
+  if not mon then return end
+  local def = game.data.pokemon[mon.species]
+  local HudTiles = require("src.render.HudTiles")
+  local PaletteFX = require("src.render.PaletteFX")
+  local TypeChart = require("src.battle.TypeChart")
+
+  love.graphics.setColor(0, 0, 0, 1)
+  Font.draw(mon.nickname or def.name, PANEL_X + 8, 0)
+  if LevelDisplay.visible(mon, "party", game) then -- RFC 0019
+    HudTiles.tile(0x6E, PANEL_X + 96, 0) -- <LV>
+    Font.draw(tostring(mon.level), PANEL_X + 104, 0)
+  end
+
+  local img, trueColor = panelSpriteImage(game, mon)
+  if img then
+    local px, py, pw, ph, scale = panelSpriteRect(img)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(img, px, py, 0, scale, scale)
+    if trueColor then PaletteFX.markTrueColor(px, py, pw, ph) end
+  end
+
+  -- ATTACK/DEFENSE/SPEED/SPECIAL box, same box and row math as
+  -- SummaryMenu's page 1 (tile (0,8) 10x10, rows at y=72/88/104/120) --
+  -- just shifted PANEL_X right, so a player who knows that screen reads
+  -- this one at a glance too.
+  love.graphics.setColor(0, 0, 0, 1)
+  Font.drawBox(PANEL_X / 8, 8, 10, 10)
+  local statsY = 72
+  local stats = {
+    { "ATTACK", mon.stats.attack }, { "DEFENSE", mon.stats.defense },
+    { "SPEED", mon.stats.speed }, { "SPECIAL", mon.stats.special },
+  }
+  for i, s in ipairs(stats) do
+    local y = statsY + (i - 1) * 16
+    Font.draw(Strings(s[1]), PANEL_X + 8, y)
+    Font.draw(("%3d"):format(s[2]), PANEL_X + 48, y + 8)
+  end
+
+  -- TYPE1/TYPE2, to the right of the stat box
+  local tx = PANEL_X + 88
+  Font.draw(Strings("TYPE1/"), tx, statsY)
+  if def.types[1] then
+    Font.draw(TypeChart.displayName(def.types[1], game.data), tx + 8, statsY + 8)
+  end
+  if def.types[2] then
+    Font.draw(Strings("TYPE2/"), tx, statsY + 24)
+    Font.draw(TypeChart.displayName(def.types[2], game.data), tx + 8, statsY + 32)
   end
   love.graphics.setColor(1, 1, 1, 1)
 end
