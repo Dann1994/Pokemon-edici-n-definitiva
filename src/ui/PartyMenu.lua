@@ -37,6 +37,22 @@ local WideBattle = require("src.battle.WideBattle")
 local PANEL_X = 160
 local PANEL_W = WideBattle.WIDTH - PANEL_X -- 144, same total width as WideBattle
 
+-- The stat box and TYPE column below (own layout, own abbreviations --
+-- ATQ/DEF/VEL/ESP instead of SummaryMenu's spelled-out ATTACK/DEFENSE/
+-- SPEED/SPECIAL, since this panel invents its own presentation rather
+-- than reproducing that screen's). BOX_X sits one tile clear of PANEL_X so
+-- its border does not land flush on the classic message box's right
+-- border -- the two shared that exact pixel column when the box began at
+-- PANEL_X itself, and their corner glyphs visibly clashed right where the
+-- SPEED/SPECIAL rows sit. The short labels are what BUYS that tile back:
+-- spelled-out "VELOCIDAD" alone was already exactly PANEL_W's old 10-tile
+-- box width with no column to spare, and even a full box (10 tiles) left
+-- only ~56px for TYPE1/TYPE2 -- not enough for a 9-letter Spanish type
+-- name like SINIESTRO or ELÉCTRICO, which is why this box is narrower.
+local BOX_X = PANEL_X + 8
+local BOX_W = 48
+local TYPE_X = BOX_X + BOX_W + 8
+
 local panelSpriteImages = {}
 
 -- The panel's front sprite, cached by path like PartyMenu.drawIcon's own
@@ -140,6 +156,13 @@ function PartyMenu:sgbPalettes(game)
       end
     end
   end
+  -- every zone above was built in the classic 0..144 space; shift the whole
+  -- list down by the same amount draw()'s translate moves the pixels (see
+  -- offY's comment) so the shader zone pass still lands on top of them
+  local offY = self:offY()
+  if offY ~= 0 then
+    for _, z in ipairs(zones) do z.y = z.y + offY end
+  end
   return zones
 end
 
@@ -162,6 +185,23 @@ function PartyMenu:wantsPanel()
   if not Game.wideUI(self.game.save) then return false end
   if Game.wideBattleInStack(self.game.stack) then return false end
   return true
+end
+
+-- Vertical centering offset for the whole classic 144px composition (list +
+-- message box + panel) inside this menu's own -- possibly taller -- wide
+-- surface: WideBattle.dims grows HEIGHT rather than width for any window
+-- narrower than the 304:144 baseline, 16:9 included, which otherwise left
+-- everything stuck against the top edge with blank canvas below it (unlike
+-- a party menu hosted inside a wide BATTLE, which centres via Game:draw's
+-- own classicOffsetY -- see wantsPanel above for why that path is skipped
+-- here). Shared by draw() (a love.graphics.translate) and sgbPalettes() /
+-- markTrueColor (plain arithmetic, since neither travels through a
+-- transform) so the picture and its SGB zone never disagree about where it
+-- landed, the same reasoning panelSpriteRect documents for X.
+function PartyMenu:offY()
+  if not self:wantsPanel() then return 0 end
+  local _, h = self:uiSize()
+  return math.floor((h - 144) / 2)
 end
 
 -- data/moves/field_moves.asm: leftmost tile per field move name
@@ -918,6 +958,18 @@ function PartyMenu.entryY(i)
 end
 
 function PartyMenu:draw()
+  -- UI LAYOUT = WIDE: this menu's own surface can be TALLER than the
+  -- classic 144px (WideBattle.dims grows height instead of width for a
+  -- window narrower than the 304:144 baseline -- most windows, since 16:9
+  -- is narrower than that), which otherwise left the whole classic
+  -- composition -- list, message box AND the panel -- stuck against the
+  -- top edge with blank canvas below it. Center the whole thing (push
+  -- pairs with the pop at the end of this function; see offY's comment).
+  local offY = self:offY()
+  if offY ~= 0 then
+    love.graphics.push()
+    love.graphics.translate(0, offY)
+  end
   love.graphics.setColor(1, 1, 1, 1)
   love.graphics.rectangle("fill", 0, 0, 160, 144)
   love.graphics.setColor(0, 0, 0, 1)
@@ -1058,6 +1110,7 @@ function PartyMenu:draw()
   end
   love.graphics.setColor(1, 1, 1, 1)
   if self:wantsPanel() then self:drawPanel() end
+  if offY ~= 0 then love.graphics.pop() end
 end
 
 -- UI LAYOUT = WIDE: condensed status panel for the highlighted mon (see
@@ -1090,35 +1143,40 @@ function PartyMenu:drawPanel()
     local px, py, pw, ph, scale = panelSpriteRect(img)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(img, px, py, 0, scale, scale)
-    if trueColor then PaletteFX.markTrueColor(px, py, pw, ph) end
+    -- markTrueColor never travels through the love.graphics transform
+    -- draw() may currently have active (offY, the vertical centering
+    -- translate) -- it records raw canvas coordinates for a later re-blit,
+    -- so it has to be told the same shift by hand (see PaletteFX.setMarkOffset
+    -- doing the equivalent for Game:draw's own X offset, #637).
+    if trueColor then PaletteFX.markTrueColor(px, py + self:offY(), pw, ph) end
   end
 
-  -- ATTACK/DEFENSE/SPEED/SPECIAL box, same box and row math as
-  -- SummaryMenu's page 1 (tile (0,8) 10x10, rows at y=72/88/104/120) --
-  -- just shifted PANEL_X right, so a player who knows that screen reads
-  -- this one at a glance too.
+  -- Stat box: own short labels (see BOX_X's comment above), same row
+  -- spacing as SummaryMenu's page 1 (16px apart, label then value).
   love.graphics.setColor(0, 0, 0, 1)
-  Font.drawBox(PANEL_X / 8, 8, 10, 10)
+  Font.drawBox(BOX_X / 8, 8, BOX_W / 8, 10)
   local statsY = 72
   local stats = {
-    { "ATTACK", mon.stats.attack }, { "DEFENSE", mon.stats.defense },
-    { "SPEED", mon.stats.speed }, { "SPECIAL", mon.stats.special },
+    { "ATK", mon.stats.attack }, { "DEF", mon.stats.defense },
+    { "SPD", mon.stats.speed }, { "SPA", mon.stats.special },
   }
   for i, s in ipairs(stats) do
     local y = statsY + (i - 1) * 16
-    Font.draw(Strings(s[1]), PANEL_X + 8, y)
-    Font.draw(("%3d"):format(s[2]), PANEL_X + 48, y + 8)
+    Font.draw(Strings(s[1]), BOX_X + 8, y)
+    Font.draw(("%3d"):format(s[2]), BOX_X + 8, y + 8)
   end
 
-  -- TYPE1/TYPE2, to the right of the stat box
-  local tx = PANEL_X + 88
-  Font.draw(Strings("TYPE1/"), tx, statsY)
+  -- TYPE1/TYPE2, to the right of the stat box -- TYPE_X leaves 80px (up to
+  -- the panel's own right edge) for the longest Spanish type names
+  -- (SINIESTRO/ELÉCTRICO, 9 letters = 72px), where the old side-by-side
+  -- layout only had ~56px to give it.
+  Font.draw(Strings("TYPE1/"), TYPE_X, statsY)
   if def.types[1] then
-    Font.draw(TypeChart.displayName(def.types[1], game.data), tx + 8, statsY + 8)
+    Font.draw(TypeChart.displayName(def.types[1], game.data), TYPE_X, statsY + 8)
   end
   if def.types[2] then
-    Font.draw(Strings("TYPE2/"), tx, statsY + 24)
-    Font.draw(TypeChart.displayName(def.types[2], game.data), tx + 8, statsY + 32)
+    Font.draw(Strings("TYPE2/"), TYPE_X, statsY + 24)
+    Font.draw(TypeChart.displayName(def.types[2], game.data), TYPE_X, statsY + 32)
   end
   love.graphics.setColor(1, 1, 1, 1)
 end

@@ -48,6 +48,9 @@ return function(game)
   pm.index = 3 -- GYARADOS: shows the >64px sprite scale-down clamp
   U.wait(10)
   U.shot(game, DIR .. "/3_party_wide_panel_gyarados.png")
+  pm.index = 4 -- PIKACHU: ELÉCTRICO is the longest Spanish type name (9)
+  U.wait(10)
+  U.shot(game, DIR .. "/4_party_wide_panel_pikachu.png")
 
   U.log("SESSION_RECAP_SHOT_DONE")
   love.event.quit()

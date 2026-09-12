@@ -1253,6 +1253,13 @@ return {
   ["LEVEL/"] = "NIVEL/",
   ["TYPE1/"] = "TIPO1/",
   ["TYPE2/"] = "TIPO2/",
+  -- pokered-plus: UI LAYOUT = WIDE party menu side panel
+  -- (src/ui/PartyMenu.lua:drawPanel) -- own abbreviations, not a
+  -- reproduction of SummaryMenu's spelled-out ATTACK/DEFENSE/SPEED/SPECIAL
+  ["ATK"] = "ATQ",
+  ["DEF"] = "DEF",
+  ["SPD"] = "VEL",
+  ["SPA"] = "ESP",
   ["HALL OF FAME"] = "SALÓN DE LA FAMA",
   ["PLAY TIME"] = "TIEMPO DE JUEGO",
   ["MONEY"] = "DINERO",
