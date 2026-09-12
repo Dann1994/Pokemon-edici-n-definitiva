@@ -188,4 +188,61 @@ return function(mod)
     },
   })
   mod.log:info("title ribbon: EDICIÓN DEFINITIVA")
+
+  -- --------------------------------------------- 7. DARK/FAIRY/STEEL moves
+  -- New moves for the types this mod already added (section 2). Power/PP/
+  -- accuracy are this mod's own numbers, not any source game's; the
+  -- learnset is a hand-picked design restricted to species already in this
+  -- Pokedex (no Gen 2/3 species added). data/new_moves.lua, data/new_learnset.lua.
+  local newMoves = readTable(mod, "data/new_moves.lua")
+  if newMoves then
+    local retyped = 0
+    for id, ty in pairs(newMoves.retype or {}) do
+      if mod.content.moves:get(id) then
+        mod.content.moves:patch(id, { type = ty })
+        retyped = retyped + 1
+      else
+        mod.log:warn("move %s not in the merged view; retype skipped", id)
+      end
+    end
+    local registered = 0
+    for id, def in pairs(newMoves.moves or {}) do
+      if not mod.content.moves:get(id) then
+        def.id = def.id or id
+        mod.content.moves:register(id, def)
+        registered = registered + 1
+      else
+        mod.log:warn("move %s already registered; new_moves entry skipped", id)
+      end
+    end
+    mod.log:info("new moves: %d registered, %d retyped", registered, retyped)
+  end
+
+  -- lists replace wholesale under `patch` (Merge.deepMerge), so each
+  -- species' full learnset -- vanilla entries plus these additions -- is
+  -- read back, re-sorted by level and written out whole.  The level order
+  -- is load-bearing: Pokemon.movesAtLevel keeps only the last four by
+  -- iteration order, and the Day Care retrieve (Pokemon.learnMovesFromDayCare)
+  -- breaks out of the loop on the first level past the target, assuming
+  -- ascending order.
+  local newLearnset = readTable(mod, "data/new_learnset.lua")
+  if newLearnset then
+    local patchedSpecies = 0
+    for species, additions in pairs(newLearnset) do
+      local def = mod.content.pokemon:get(species)
+      if def then
+        local merged = shallowCopyList(def.learnset or {})
+        for _, entry in ipairs(additions) do
+          merged[#merged + 1] = { level = entry.level, move = entry.move }
+        end
+        table.sort(merged, function(a, b) return a.level < b.level end)
+        mod.content.pokemon:patch(species, { learnset = merged })
+        patchedSpecies = patchedSpecies + 1
+      else
+        mod.log:warn("species %s not in the merged view; new learnset skipped",
+                     species)
+      end
+    end
+    mod.log:info("new learnset: %d species patched", patchedSpecies)
+  end
 end

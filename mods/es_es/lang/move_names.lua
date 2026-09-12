@@ -169,4 +169,21 @@ return {
   ["WING_ATTACK"] = "Ataque Ala",
   ["WITHDRAW"] = "Refugio",
   ["WRAP"] = "Constricción",
+
+  -- pokered_plus: nuevos movimientos siniestro/hada/acero (data/new_moves.lua)
+  ["PURSUIT"] = "Persecución",
+  ["THIEF"] = "Ladrón",
+  ["CRUNCH"] = "Triturar",
+  ["FEINT_ATTACK"] = "Finta",
+  ["TAUNT"] = "Mofa",
+  ["DISARMING_VOICE"] = "Voz Cautivadora",
+  ["DRAINING_KISS"] = "Beso Drenaje",
+  ["MOONBLAST"] = "Fuerza Lunar",
+  ["DAZZLING_GLEAM"] = "Brillo Mágico",
+  ["PLAY_ROUGH"] = "Carantoña",
+  ["METAL_CLAW"] = "Garra Metal",
+  ["STEEL_WING"] = "Ala de Acero",
+  ["IRON_TAIL"] = "Cola Férrea",
+  ["IRON_DEFENSE"] = "Defensa Férrea",
+  ["METAL_SOUND"] = "Eco Metálico",
 }

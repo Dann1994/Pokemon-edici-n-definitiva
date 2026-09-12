@@ -104,5 +104,47 @@ T.eq(Data.rulesets.gen1_faithful.oneIn256Miss, true, "gen1_faithful is untouched
 T.eq(Data.rulesets.gen1_faithful.xAccuracyNeverMiss, true, "gen1_faithful keeps the quirk")
 T.eq(Data.constants.defaultRuleset, "modern", "modern is the default ruleset")
 
+-- 7. new DARK/FAIRY/STEEL moves + learnset
+T.eq(Data.moves.BITE.type, "DARK", "BITE retyped to DARK")
+T.check(Data.moves.CRUNCH ~= nil, "CRUNCH registered")
+T.eq(Data.moves.CRUNCH.type, "DARK", "CRUNCH is DARK")
+T.eq(Data.moves.CRUNCH.category, "physical", "CRUNCH is physical")
+T.eq(Data.moves.MOONBLAST.type, "FAIRY", "MOONBLAST is FAIRY")
+T.eq(Data.moves.MOONBLAST.category, "special", "MOONBLAST is special")
+T.eq(Data.moves.IRON_DEFENSE.type, "STEEL", "IRON_DEFENSE is STEEL")
+T.eq(Data.moves.IRON_DEFENSE.power, 0, "IRON_DEFENSE is a status move")
+for _, id in ipairs({ "PURSUIT", "THIEF", "FEINT_ATTACK", "TAUNT",
+    "DISARMING_VOICE", "DRAINING_KISS", "DAZZLING_GLEAM", "PLAY_ROUGH",
+    "METAL_CLAW", "STEEL_WING", "IRON_TAIL", "METAL_SOUND" }) do
+  T.check(Data.moves[id] ~= nil, id .. " registered")
+  T.check(Data.moves[id].effect ~= nil, id .. " has a move_effects id")
+end
+
+do
+  local function hasLevel(learnset, move, level)
+    for _, e in ipairs(learnset) do
+      if e.move == move and e.level == level then return true end
+    end
+    return false
+  end
+  local function sorted(learnset)
+    for i = 2, #learnset do
+      if learnset[i - 1].level > learnset[i].level then return false end
+    end
+    return true
+  end
+  T.check(hasLevel(Data.pokemon.CLEFAIRY.learnset, "MOONBLAST", 40),
+    "CLEFAIRY learns MOONBLAST at 40")
+  T.check(hasLevel(Data.pokemon.ONIX.learnset, "IRON_TAIL", 30),
+    "ONIX learns IRON_TAIL at 30")
+  T.check(sorted(Data.pokemon.CLEFAIRY.learnset),
+    "CLEFAIRY's merged learnset stays level-ascending")
+  T.check(sorted(Data.pokemon.ONIX.learnset),
+    "ONIX's merged learnset stays level-ascending")
+  -- the vanilla entries are still there -- patch merged, it did not replace
+  T.check(#Data.pokemon.ONIX.learnset > 2,
+    "ONIX kept its vanilla learnset alongside the new moves")
+end
+
 run.release()
 T.finish("pokered_plus")
