@@ -21,6 +21,7 @@ Convención de vías: **[opción]** = ya existe como ajuste · **[mod]** = vía 
 | 1.3 | Texto rápido por defecto | [fuente] `SaveData.lua` | HECHO | `textSpeed = 1` (FAST). Test repinneado. |
 | 1.5 | Título: "Red Version" → "EDICIÓN DEFINITIVA" | [mod] `field.boot.title.versionRibbon` | HECHO | `mods/pokered_plus` v0.5.0. `tools/pokered_plus_title_ribbon.py` genera la tira 1-bit (fuente Plain Pixel) en `assets/title/`; `TitleState` la centra en y=64 y la colorea con la paleta LOGO1 (roja en el título de Red). |
 | 1.4 | Sprites de Pokémon de Amarillo sobre Red | [datos] overlay de cache | HECHO | `scripts/pokered_plus_yellow_gfx.lua` copia los 305 PNGs de batalla de Yellow sobre el cache de Red y ajusta `frontSize` de las 7 especies que cambiaron de tamaño. **Re-ejecutar tras cada re-importación de Red.** `--revert` para deshacer. |
+| 1.8 | **Aviso de MO al interactuar** (estilo remakes de 3ª gen) | [fuente] `OverworldController.lua` + `SaveData.lua` | HECHO | Al acercarse al agua o a un árbol cortable y tocar A, pregunta directo "¿Quieres usar SURF/CORTE?" en vez de exigir el submenú de MO del menú de equipo. Cablea primitivas que ya existían sin usar (`useSurfFieldMove/useCutFieldMove/trySurf/tryCut/stopSurfing`) al único A-press hook que pokered nunca tuvo (`OverworldState:tryFieldMovePrompt`). Sin insignia / nada que cortar / sin agua → rechazo silencioso, nunca insiste. Opción **FIELD MOVE PROMPT** en OPCIONES → EXTRAS (por defecto ON). Test `field_move_prompt.lua` 18/18. |
 
 ## 2. Tipos y tabla de tipos
 
@@ -160,14 +161,16 @@ Catálogo — decidir cuáles activar por defecto:
 ### De mí (implementar)
 1. **§7.2** — pulido visual del mapa de la Isla Suprema (cuando el usuario lo edite en Tiled
    y me pase el export) + integrar ese export en `mods/mew_event/data/isla_suprema.lua`.
+2. **EN CURSO** — ensanchar a pantalla ancha los menús de selección: equipo/Pokémon (`PartyMenu`),
+   tienda (`ShopMenu`), PC/caja y otros que hoy quedan angostos en el centro de la ventana panorámica.
 
 ### De vos (decisión / prueba)
-2. **§7.2 / §7.3** — playtest real en el juego: (Mew) Mansión → Fuji → marinero → isla → Mew;
+3. **§7.2 / §7.3** — playtest real en el juego: (Mew) Mansión → Fuji → marinero → isla → Mew;
    (Oak) lab/rival → Bill → Isla Canela → Lance → Ruta 1 → combate → créditos.
-3. **§7.1** — qué eventos nuevos querés además de Mew y Oak.
+4. **§7.1** — qué eventos nuevos querés además de Mew y Oak.
 5. **§7b.4** — ~~guion narrativo en español~~ HECHO (2592/2592). Falta solo tu revisión en juego y ajustes de tono si algo chirría.
 6. **§6.1** — probar el modo LAN con 2 instancias.
-7. **§1.1** — navegación del menú de ataques en widescreen (quedó en grid; ajuste cosmético).
+7. **§1.8** — ~~aviso de MO al interactuar~~ HECHO. Falta tu playtest real (agua y árbol cortable).
 8. **§5** — QoL: ¿subir `textSpeed` a máx, `battleStyle="set"`, `animations`?
 9. **§7b.2** — si querés, sigo con las ~800 cadenas de tripas del launcher que quedan sin traducir.
 10. **§2.7** — si querés los learnsets/stats *oficiales* de Gen 2/3 (no los inventados por el mod), completá `mods/pokered_plus-worksheet/new_moves.txt` (plantilla ya entregada) y lo cableo.
