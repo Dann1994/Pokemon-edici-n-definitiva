@@ -1980,7 +1980,7 @@ function OverworldState:crossConnection(dir, conn)
   -- fresh walk-cycle clock so the seam step always shows leg frames
   -- (mid-cycle stand phase would otherwise look like a slide)
   p.animClock = 0
-  p.stepFramesCur = p:stepLength(dir)
+  p.stepFramesCur, p.runningCur = p:stepLength(dir)
   require("src.core.FixedStep"):discardCatchup()
   return true
 end
@@ -5479,9 +5479,9 @@ function OverworldState:updateScriptMoves()
         e.facing = mv.dir
         local tx, ty = Collision.target(e.cellX, e.cellY, mv.dir)
         e.targetX, e.targetY = tx, ty
-        -- a simulated d-pad press runs at the CURRENT walk/bike speed, not
-        -- whatever the last real step left behind -- home/overworld.asm:276
-        if e.stepLength then e.stepFramesCur = e:stepLength() end
+        -- a simulated d-pad press runs at the CURRENT walk/bike/run speed,
+        -- not whatever the last real step left behind -- home/overworld.asm:276
+        if e.stepLength then e.stepFramesCur, e.runningCur = e:stepLength() end
         e.moving = true
         e.progress = 0
         mv.remaining = mv.remaining - 1

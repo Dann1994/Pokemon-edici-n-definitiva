@@ -200,6 +200,18 @@ local function buildRows(game)
         o.fieldMovePrompt = o.fieldMovePrompt == false
         return true
       end },
+    -- pokered-plus: holding B on foot doubles step speed AND the walk-cycle
+    -- rate to match (src/world/Player.lua:isRunning) -- unlike the bike,
+    -- which only doubles the former.
+    { id = "holdBToRun", label = Strings("HOLD B TO RUN"),
+      value = function(g)
+        return g.save.options.holdBToRun == false and Strings("OFF") or Strings("ON")
+      end,
+      step = function(g)
+        local o = g.save.options
+        o.holdBToRun = o.holdBToRun == false
+        return true
+      end },
     { id = "battleStyle", label = Strings("BATTLE STYLE"),
       value = function(g)
         return g.save.options.battleStyle == "set" and Strings("SET") or Strings("SHIFT")
@@ -750,7 +762,7 @@ local GROUPS = {
   -- A mod's Pipelines row splices in after TILT and is in no group, so it
   -- stays on the top level rather than being swallowed into this page.
   { id = "group.extras", label = "EXTRAS",
-    members = { "tilt", "zoom", "voidFill", "fieldMovePrompt" } },
+    members = { "tilt", "zoom", "voidFill", "fieldMovePrompt", "holdBToRun" } },
 }
 
 -- The top level's order, groups and singles alike.  Anything not named here

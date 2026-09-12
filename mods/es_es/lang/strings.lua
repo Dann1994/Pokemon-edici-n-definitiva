@@ -8,6 +8,8 @@ return {
   ["FIELD MOVE PROMPT"] = "AVISO DE MOVIMIENTOS",
   ["Want to get\noff the water?"] = "¿Quieres bajarte\ndel agua?",
   ["Want to use\nCUT?"] = "¿Quieres usar\nCORTE?",
+  -- pokered-plus: HOLD B TO RUN (src/world/Player.lua:isRunning)
+  ["HOLD B TO RUN"] = "MANTENER B PARA CORRER",
   ["%s\nflew up high!"] = "¡%s voló\nmuy alto!",
   ["%s\ndug a hole!"] = "¡%s cavó\nun hoyo!",
   ["%s\nmade a whirlwind!"] = "¡%s formó\nun torbellino!",

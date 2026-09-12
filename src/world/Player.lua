@@ -110,14 +110,39 @@ function Player:turnWindow()
   return frames
 end
 
+-- pokered-plus: HOLD B TO RUN (save.options.holdBToRun, on by default --
+-- see SaveData.defaultOptions' comment). Off on the bike (already faster)
+-- or surfing (nothing to run with), and off mid-ledge-hop for the same
+-- reason bike speedup already is (home/overworld.asm:283): a hop is a
+-- fixed cosmetic arc, not a regular step, and speeding it up looked wrong
+-- for the exact reason a faster bike step through one already does not
+-- try to. B is free to read here because OverworldState:handleInput never
+-- treats a held B as anything of its own during normal walking (it only
+-- braces the bike's downhill pull on a slope map, gated on save.onBike,
+-- which running already excludes).
+function Player:isRunning()
+  local Game = require("src.core.Game")
+  local save = Game.save
+  if not (save and save.options and save.options.holdBToRun ~= false) then
+    return false
+  end
+  if save.onBike or self.ledgeHop or self.surfing then return false end
+  local input = Game.input
+  return (input and input:isDown("b")) or false
+end
+
 -- the bicycle doubles walking speed (8 frames per step); movement.speed
--- lets a mod multiply or replace that (running shoes, dash, etc.)
--- DoBikeSpeedup is skipped mid-hop -- home/overworld.asm:283
+-- lets a mod multiply or replace that (running shoes, dash, etc.). Running
+-- reuses that exact halved count -- the same "twice as many tiles per
+-- second" a mod asking for it through the hook would get, just reached by
+-- holding B instead. DoBikeSpeedup is skipped mid-hop -- home/overworld.asm:283
 function Player:stepLength(dir)
   local Game = require("src.core.Game")
   local save = Game.save
   local onBike = (save and save.onBike and not self.ledgeHop) or false
+  local running = self:isRunning()
   local frames = onBike and self.bikeStepFrames or self.stepFrames or STEP_FRAMES
+  if running and self.bikeStepFrames then frames = self.bikeStepFrames end
   -- held, so those three cost a walking step -- home/overworld.asm:377
   dir = dir or self.facing
   local slope = onBike and self.slopeMap and dir ~= "down" or false
@@ -125,6 +150,7 @@ function Player:stepLength(dir)
   if Runtime.wantsHook("movement.speed") then
     frames = Runtime.call("movement.speed", function(f) return f end, frames, {
       onBike = onBike,
+      running = running,
       slope = slope and true or false,
       dir = dir,
       surfing = self.surfing and true or false,
@@ -133,7 +159,7 @@ function Player:stepLength(dir)
       save = save,
     })
   end
-  return math.max(1, math.floor(tonumber(frames) or STEP_FRAMES))
+  return math.max(1, math.floor(tonumber(frames) or STEP_FRAMES)), running
 end
 
 -- Attempt to start a step; returns "moved"|"turned"|"blocked"|nil.
@@ -171,7 +197,9 @@ function Player:tryMove(dir, map, entities)
   self.moving = true
   self.bumpFrames = nil -- a real step supersedes any in-place bonk
   self.progress = 0
-  self.stepFramesCur = self:stepLength(dir)
+  -- locked in for the whole step, like onBike already is above -- a mid-step
+  -- B release/press must not change the pace of a tile already underway
+  self.stepFramesCur, self.runningCur = self:stepLength(dir)
   return "moved"
 end
 
@@ -220,15 +248,21 @@ function Player:update()
   -- below) can never double-tick the leg cadence.
   if not self.moving and self.bumpFrames and self.bumpFrames > 0 then
     self.bumpFrames = self.bumpFrames - 1
-    self.animClock = (self.animClock or 0) + 1
+    -- pokered-plus: running still pumps the legs faster walking in place
+    -- against a wall, same as it does mid-step below
+    self.animClock = (self.animClock or 0) + (self:isRunning() and 2 or 1)
   end
   if not self.moving then return false end
   local stepLen = self.stepFramesCur or self.stepFrames or STEP_FRAMES
   self.progress = self.progress + 1
   -- the walk-cycle clock ticks once per real frame while moving, so the
   -- leg cadence stays constant when the bike halves stepFramesCur (only
-  -- translation speed doubles, like UpdatePlayerSprite's frame counters)
-  self.animClock = (self.animClock or 0) + 1
+  -- translation speed doubles, like UpdatePlayerSprite's frame counters).
+  -- pokered-plus: HOLD B TO RUN deliberately breaks that split -- running
+  -- ticks the clock twice a frame, so one walk-cycle still lands exactly
+  -- on one (now half-length) step, the same ratio normal walking keeps,
+  -- and the legs visibly pump faster instead of just gliding like the bike.
+  self.animClock = (self.animClock or 0) + (self.runningCur and 2 or 1)
   local d = Collision.DELTA[self.facing]
   local px = math.floor(self.progress * 16 / stepLen)
   self.px = self.cellX * 16 + d[1] * px

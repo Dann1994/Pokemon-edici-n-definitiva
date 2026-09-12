@@ -274,6 +274,16 @@ function SaveData.defaultOptions()
     -- only refuses silently (no badge, nothing to cut/no water): this never
     -- nags, it only ever offers something that would actually work.
     fieldMovePrompt = true,
+    -- pokered-plus: HOLD B TO RUN. Holding B while walking on foot doubles
+    -- step speed (the SAME halved step-frame count the bicycle already
+    -- uses, src/world/Player.lua:stepLength) AND doubles the walk-cycle
+    -- animation rate to match -- unlike the bike, which glides faster
+    -- while its legs keep pedaling at the normal rate. Off automatically
+    -- while biking (already faster) or surfing (no legs to pump); never
+    -- while B is doing something else (menus, dialogue) since Player:
+    -- isRunning only reads input during OverworldState:handleInput's own
+    -- poll, the same gate every other movement key already goes through.
+    holdBToRun = true,
     -- battle screen composition: og (the 160x144 original) | wide
     -- (304x144, src/battle/WideBattle.lua)
     -- pokered-plus: widescreen by default. Escape hatch: branch `stock-defaults`.
