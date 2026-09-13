@@ -825,6 +825,17 @@ function Game:keypressed(key)
     self.stack:push(require("src.dev.Console").new(self))
     return
   end
+  if key == "return" and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
+    -- the conventional desktop fullscreen toggle, alongside OPTIONS ->
+    -- VIDEO -> VIDEO MODE (that row's own step function does the same
+    -- three calls: cycle the saved option, push it to the live window,
+    -- persist it)
+    local VideoMode = require("src.core.VideoMode")
+    self.save.options.videoMode = VideoMode.cycle(self.save.options.videoMode)
+    VideoMode.apply(self.save.options.videoMode)
+    self:writeOptions()
+    return
+  end
   if key == "f10" then
     -- toggle: the manager no longer swallows the keyboard, so a second
     -- press reaches this branch and closes it instead of stacking another
