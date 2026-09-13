@@ -1,10 +1,15 @@
--- Visual check for this session's additions:
+-- Visual check for this session's additions (BACKLOG.md §1.8-1.11):
 --   (1) the field-move A-press prompt (SURF), OPTIONS -> EXTRAS -> FIELD
 --       MOVE PROMPT (src/world/OverworldController.lua:tryFieldMovePrompt)
---   (2) the UI LAYOUT = WIDE party-menu side panel
+--   (2) the UI LAYOUT = WIDE party-menu side panel, §1.9 phase 1
 --       (src/ui/PartyMenu.lua:drawPanel)
---   (3) the UI LAYOUT = WIDE bag/shop/PC item box, phase 2 of §1.9
+--   (3) the UI LAYOUT = WIDE bag/shop/PC item box, §1.9 phase 2
 --       (src/ui/ListMenu.lua:drawItemBox, the BUY list's owned-count column)
+--   (4) the wide STATS screen (moves panel page 1, stats/type panel page 2)
+--       and the wide Pokédex list's preview panel, §1.9 phase 3
+--       (src/ui/SummaryMenu.lua, src/ui/PokedexMenu.lua, src/ui/WidePanel.lua)
+--   (5) the START (pause) menu docking to the real window corner under
+--       WIDE, §1.11 (src/render/Renderer.lua:setWideCornerAnchor)
 --   SHOT_DIR=<dir> POKEPORT_DRIVER=tests/drivers/session_recap_shot.lua \
 --     "love" . --game=red
 local U = require("tests.drivers.util")
@@ -107,6 +112,33 @@ return function(game)
   U.tap(game, "a") -- open STATS/SWITCH/CANCEL
   U.wait(15)
   U.shot(game, DIR .. "/7_party_submenu_box.png")
+
+  -- --------------------------------------------------- (5) wide STATS screen
+  local dexMon = Pokemon.new(game.data, "GYARADOS", 30)
+  local sm = Screens.push(game, "SummaryMenu", dexMon)
+  sm.whiteHold = 0
+  U.wait(10)
+  U.shot(game, DIR .. "/10_summary_wide_panel_page1.png")
+  sm.page = 2
+  U.wait(5)
+  U.shot(game, DIR .. "/11_summary_wide_panel_page2.png")
+
+  -- --------------------------------------------------- (6) wide Pokédex list
+  game.save.pokedex = { seen = {}, owned = {} }
+  for _, sp in ipairs({ "BULBASAUR", "CHARIZARD", "GYARADOS", "PIKACHU",
+                        "MAGNEMITE", "CLEFAIRY" }) do
+    game.save.pokedex.owned[sp] = true
+  end
+  local dex = Screens.push(game, "PokedexMenu", {})
+  U.wait(10)
+  U.shot(game, DIR .. "/12_pokedex_wide_panel.png")
+
+  -- ------------------------------------------------- (7) START menu docking
+  while game.stack:top() do game.stack:pop() end
+  U.teleport(game, "PALLET_TOWN", 5, 6, "down")
+  Screens.push(game, "StartMenu")
+  U.wait(10)
+  U.shot(game, DIR .. "/13_start_menu_wide_docking.png")
 
   U.log("SESSION_RECAP_SHOT_DONE")
   love.event.quit()

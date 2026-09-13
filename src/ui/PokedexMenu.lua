@@ -6,6 +6,8 @@ local Strings = require("src.core.Strings")
 local Theme = require("src.ui.Theme")
 local MenuRepeat = require("src.ui.MenuRepeat")
 
+local WidePanel = require("src.ui.WidePanel")
+
 local PokedexMenu = {}
 PokedexMenu.__index = PokedexMenu
 PokedexMenu.isOpaque = true
@@ -14,6 +16,21 @@ PokedexMenu.isOpaque = true
 local ROWS = 7
 local FIRST_ROW_Y = 24
 local NUM_X, BALL_X, NAME_X, CURSOR_X = 8, 24, 32, 0
+
+-- UI LAYOUT = WIDE: a panel in the extra width previewing the highlighted
+-- row -- own design, not a reproduction of DexEntryMenu (the real DATA
+-- screen, still one A-press away, unchanged). Blank for an entry the
+-- player has never seen (item.value stays nil the same way the row
+-- itself falls back to a dashed name for it) -- a merely-seen entry
+-- previews same as an owned one, matching DATA's own gate (chooseEntry
+-- below only refuses a row with no value at all).
+local PANEL_X = 160
+-- same box/column math as PartyMenu.lua's own panel (BOX_X/BOX_W/TYPE_X,
+-- see its comment): one tile clear of PANEL_X, short stat abbreviations
+-- so TYPE1/TYPE2 still has room for a 9-letter Spanish type name.
+local BOX_X = PANEL_X + 8
+local BOX_W = 48
+local TYPE_X = BOX_X + BOX_W + 8
 
 -- engine/menus/pokedex.asm:163-199
 -- (Yellow: pokeyellow engine/menus/pokedex.asm:266-306)
@@ -35,9 +52,40 @@ local function dividerCodes()
 end
 local DIVIDER = dividerCodes()
 
--- SGB: PalPacket_Pokedex, whole screen
+-- SGB: PalPacket_Pokedex, whole screen -- plus the wide panel's own
+-- preview sprite, in its species' palette, same idea as PartyMenu's own
+-- panel sprite zone (true-color art sits out the zone via markTrueColor
+-- at draw time instead, same split).
 function PokedexMenu:sgbPalettes(game)
-  return require("src.render.PaletteFX").wholeNamed(game.data, "BROWNMON")
+  local P = require("src.render.PaletteFX")
+  local base = P.pal(game.data, "BROWNMON")
+  if not base then return nil end
+  local zones = { P.whole(base) }
+  if WidePanel.wants(game) then
+    local item = self.items[self.index]
+    local species = item and item.value
+    if species then
+      local img, trueColor = WidePanel.spriteImage(game, species)
+      if img and not trueColor then
+        local pal = P.monPal(game.data, species)
+        if pal then
+          local px, py, pw, ph = WidePanel.spriteRect(img, PANEL_X, 144)
+          zones[#zones + 1] = P.zone(pal, math.floor(px / 8), math.floor(py / 8),
+            math.ceil((px + pw) / 8) - 1, math.ceil((py + ph) / 8) - 1)
+        end
+      end
+    end
+  end
+  local offY = WidePanel.offY(game)
+  if offY ~= 0 then
+    for _, z in ipairs(zones) do z.y = z.y + offY end
+  end
+  return zones
+end
+
+-- Renderer:setUISize asks the top state for its surface before anything draws
+function PokedexMenu:uiSize()
+  return WidePanel.uiSize(self.game)
 end
 
 function PokedexMenu.new(game, opts)
@@ -267,6 +315,14 @@ local function drawBall(game, x, y)
 end
 
 function PokedexMenu:draw()
+  -- UI LAYOUT = WIDE: see PartyMenu.lua's own offY comment -- this
+  -- screen's surface can be taller than the classic 144px, and without
+  -- this the whole classic composition sits stuck against the top edge.
+  local offY = WidePanel.offY(self.game)
+  if offY ~= 0 then
+    love.graphics.push()
+    love.graphics.translate(0, offY)
+  end
   love.graphics.setColor(1, 1, 1, 1)
   love.graphics.rectangle("fill", 0, 0, 160, 144)
   local at = self.rowsAt
@@ -305,6 +361,63 @@ function PokedexMenu:draw()
       Font.drawCode(self.hollowIndex == i
                     and Theme.cursorHollow or Theme.cursor, CURSOR_X, y)
     end
+  end
+  love.graphics.setColor(1, 1, 1, 1)
+  if WidePanel.wants(self.game) then self:drawPreviewPanel() end
+  if offY ~= 0 then love.graphics.pop() end
+end
+
+-- UI LAYOUT = WIDE only: sprite + BASE stats + TYPE1/TYPE2 for the
+-- highlighted row, same box/column layout as PartyMenu's own panel (own
+-- design either way) -- BASE stats rather than a specific mon's current
+-- ones, since a dex entry has no mon instance behind it, just a species.
+function PokedexMenu:drawPreviewPanel()
+  local game = self.game
+  local item = self.items[self.index]
+  local species = item and item.value
+  if not species then return end
+  local def = game.data.pokemon[species]
+  if not def then return end
+  local HudTiles = require("src.render.HudTiles")
+  local TypeChart = require("src.battle.TypeChart")
+  local PaletteFX = require("src.render.PaletteFX")
+
+  love.graphics.setColor(0, 0, 0, 1)
+  Font.draw(def.name, PANEL_X + 8, 0)
+  HudTiles.statusTile(0x74, PANEL_X + 96, 0) -- №
+  Font.draw(("%03d"):format(def.dex or 0), PANEL_X + 104, 0)
+
+  local img, trueColor = WidePanel.spriteImage(game, species)
+  if img then
+    local px, py, pw, ph, scale = WidePanel.spriteRect(img, PANEL_X, 144)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(img, px, py, 0, scale, scale)
+    if trueColor then
+      PaletteFX.markTrueColor(px, py + WidePanel.offY(game), pw, ph)
+    end
+  end
+
+  love.graphics.setColor(0, 0, 0, 1)
+  Font.drawBox(BOX_X / 8, 8, BOX_W / 8, 10)
+  local statsY = 72
+  local stats = def.baseStats or {}
+  local rows = {
+    { "ATK", stats.attack }, { "DEF", stats.defense },
+    { "SPD", stats.speed }, { "SPA", stats.special },
+  }
+  for i, s in ipairs(rows) do
+    local y = statsY + (i - 1) * 16
+    Font.draw(Strings(s[1]), BOX_X + 8, y)
+    Font.draw(("%3d"):format(s[2] or 0), BOX_X + 8, y + 8)
+  end
+
+  Font.draw(Strings("TYPE1/"), TYPE_X, statsY)
+  if def.types and def.types[1] then
+    Font.draw(TypeChart.displayName(def.types[1], game.data), TYPE_X, statsY + 8)
+  end
+  if def.types and def.types[2] then
+    Font.draw(Strings("TYPE2/"), TYPE_X, statsY + 24)
+    Font.draw(TypeChart.displayName(def.types[2], game.data), TYPE_X, statsY + 32)
   end
   love.graphics.setColor(1, 1, 1, 1)
 end

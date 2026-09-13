@@ -17,6 +17,24 @@ local Strings = require("src.core.Strings")
 local Stats = require("src.pokemon.Stats")
 local Status = require("src.battle.Status")
 
+local WidePanel = require("src.ui.WidePanel")
+
+-- UI LAYOUT = WIDE: a panel in the extra width -- moves+PP on page 1
+-- (complementing that page's own stats/type), stats+type on page 2
+-- (complementing ITS own moves/EXP) -- own design either way, own
+-- coordinates, not a reproduction of the classic page it sits beside.
+-- Together the two pages now always show all four pieces (stats, type,
+-- moves, EXP) with nothing duplicated; the first version showed the same
+-- move list on both pages, which just looked like an odd echo on page 2.
+-- Page-flip itself (A/B, page 1 <-> page 2) is completely unchanged.
+local PANEL_X = 160
+-- same box/column math as PartyMenu.lua's own panel (BOX_X/BOX_W/TYPE_X,
+-- see its comment): short stat abbreviations so TYPE1/TYPE2 still has
+-- room for a 9-letter Spanish type name (SINIESTRO, ELÉCTRICO).
+local BOX_X = PANEL_X + 8
+local BOX_W = 48
+local TYPE_X = BOX_X + BOX_W + 8
+
 local SummaryMenu = {}
 SummaryMenu.__index = SummaryMenu
 SummaryMenu.isOpaque = true
@@ -29,7 +47,20 @@ function SummaryMenu:sgbPalettes(game)
   if not mon then return P.wholeNamed(game.data, "MEWMON") end
   local bar = P.pal(game.data, P.barPalName(mon.hp, mon.stats.hp))
   if not bar then return nil end
-  return { P.whole(bar), P.zone(P.monPal(game.data, mon.species), 1, 0, 7, 6) }
+  local zones = { P.whole(bar), P.zone(P.monPal(game.data, mon.species), 1, 0, 7, 6) }
+  -- every zone above was built in the classic 0..144 space; shift the
+  -- whole list down by the same amount draw()'s translate moves the
+  -- pixels (see offY's comment on PartyMenu.lua, the same reasoning)
+  local offY = WidePanel.offY(game)
+  if offY ~= 0 then
+    for _, z in ipairs(zones) do z.y = z.y + offY end
+  end
+  return zones
+end
+
+-- Renderer:setUISize asks the top state for its surface before anything draws
+function SummaryMenu:uiSize()
+  return WidePanel.uiSize(self.game)
 end
 
 function SummaryMenu.new(game, mon)
@@ -119,7 +150,21 @@ local function printLevel(tx, ty, level)
 end
 
 function SummaryMenu:draw()
+  local uiw, uih = self:uiSize()
+  -- UI LAYOUT = WIDE: this screen's own surface can be TALLER than the
+  -- classic 144px (WideBattle.dims grows height instead of width for a
+  -- window narrower than the 304:144 baseline, 16:9 included), which
+  -- otherwise left the whole classic composition stuck against the top
+  -- edge with blank canvas below it -- see PartyMenu.lua's own offY
+  -- comment, the same fix.
+  local offY = WidePanel.offY(self.game)
+  if offY ~= 0 then
+    love.graphics.push()
+    love.graphics.translate(0, offY)
+  end
   love.graphics.setColor(1, 1, 1, 1)
+  -- the classic 160x144 field, not the whole (possibly wider) canvas --
+  -- the panel below paints its own background
   love.graphics.rectangle("fill", 0, 0, 160, 144)
   local mon = self.mon
   local game = self.game
@@ -136,9 +181,12 @@ function SummaryMenu:draw()
     local py = math.max(0, 56 - ph)
     love.graphics.draw(self.sprite, 8 + pw, py, 0, -1, 1)
     -- a full-color pic has to sit out the SGB monPal recolor, so mark the
-    -- rect the mirrored draw covers for the unshaded pass (#430)
+    -- rect the mirrored draw covers for the unshaded pass (#430). Like the
+    -- zones above, markTrueColor never travels through the translate this
+    -- draw() may currently have active, so it needs offY by hand (#637's
+    -- reasoning, PartyMenu.lua's drawPanel comment).
     if self.spriteTrueColor then
-      require("src.render.PaletteFX").markTrueColor(8, py, pw, ph)
+      require("src.render.PaletteFX").markTrueColor(8, py + offY, pw, ph)
     end
   end
   local HudTiles = require("src.render.HudTiles")
@@ -240,10 +288,86 @@ function SummaryMenu:draw()
     end
   end
   love.graphics.setColor(1, 1, 1, 1)
-  -- engine/pokemon/status_screen.asm:82
-  if self.whiteHold and self.whiteHold > 0 then
-    love.graphics.rectangle("fill", 0, 0, 160, 144)
+  if WidePanel.wants(game) then
+    if self.page == 1 then self:drawMovesPanel() else self:drawStatsTypePanel() end
   end
+  if offY ~= 0 then love.graphics.pop() end
+  -- engine/pokemon/status_screen.asm:82 -- the whole (possibly taller)
+  -- canvas, drawn AFTER the pop above so offY does not push part of it
+  -- past the bottom edge and leave a sliver unflashed at the top
+  if self.whiteHold and self.whiteHold > 0 then
+    love.graphics.rectangle("fill", 0, 0, uiw, uih)
+  end
+end
+
+-- UI LAYOUT = WIDE, page 1 only: the 4 moves + PP, same content and row
+-- math as page 2's own move list (17 tiles, one narrower than that box's
+-- 18 -- see below -- since it starts PANEL_X right rather than at the
+-- screen's own left edge).
+function SummaryMenu:drawMovesPanel()
+  local mon = self.mon
+  local game = self.game
+  local data = game.data
+  love.graphics.setColor(0, 0, 0, 1)
+  -- classic page 2's own box is 20 tiles with the PP value ending 8px shy
+  -- of its right border (112 + 40 = 152, border at 160). This box is only
+  -- 17 tiles -- one narrower than a straight PANEL_W/8=18 would give, so
+  -- the SAME value column (PANEL_X+88..+128) keeps that identical 8px
+  -- margin against ITS OWN right border at PANEL_X+136, instead of
+  -- landing flush on the canvas edge at PANEL_X+144 and reading as
+  -- clipped (a screenshot caught exactly that at the original 18-tile width).
+  Font.drawBox(PANEL_X / 8, 8, 17, 10)
+  for i = 1, 4 do
+    local mv = mon.moves[i]
+    local y = 72 + (i - 1) * 16
+    if mv then
+      local mdef = data.moves[mv.id]
+      Font.draw(mdef.name, PANEL_X + 16, y)
+      Font.draw(Strings("PP"), PANEL_X + 64, y + 8)
+      local maxPP = mdef.pp + (mv.ppUps or 0) * math.floor(mdef.pp / 5)
+      Font.draw(("%2d/%2d"):format(mv.pp, maxPP), PANEL_X + 88, y + 8)
+    else
+      Font.draw("-", PANEL_X + 16, y)
+      Font.draw("--", PANEL_X + 88, y + 8)
+    end
+  end
+  love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- UI LAYOUT = WIDE, page 2 only: the same stats+type page 1 shows in
+-- classic position -- short abbreviations (own presentation, matching
+-- PartyMenu's own panel) rather than page 1's spelled-out ATTACK/DEFENSE/
+-- SPEED/SPECIAL, since this box is narrower to leave TYPE1/TYPE2 enough
+-- room (see BOX_X's comment).
+function SummaryMenu:drawStatsTypePanel()
+  local mon = self.mon
+  local game = self.game
+  local data = game.data
+  local def = data.pokemon[mon.species]
+  local TypeChart = require("src.battle.TypeChart")
+
+  love.graphics.setColor(0, 0, 0, 1)
+  Font.drawBox(BOX_X / 8, 8, BOX_W / 8, 10)
+  local statsY = 72
+  local stats = {
+    { "ATK", mon.stats.attack }, { "DEF", mon.stats.defense },
+    { "SPD", mon.stats.speed }, { "SPA", mon.stats.special },
+  }
+  for i, s in ipairs(stats) do
+    local y = statsY + (i - 1) * 16
+    Font.draw(Strings(s[1]), BOX_X + 8, y)
+    Font.draw(("%3d"):format(s[2]), BOX_X + 8, y + 8)
+  end
+
+  Font.draw(Strings("TYPE1/"), TYPE_X, statsY)
+  if def.types[1] then
+    Font.draw(TypeChart.displayName(def.types[1], data), TYPE_X, statsY + 8)
+  end
+  if def.types[2] then
+    Font.draw(Strings("TYPE2/"), TYPE_X, statsY + 24)
+    Font.draw(TypeChart.displayName(def.types[2], data), TYPE_X, statsY + 32)
+  end
+  love.graphics.setColor(1, 1, 1, 1)
 end
 
 return SummaryMenu
