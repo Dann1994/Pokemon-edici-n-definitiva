@@ -140,6 +140,22 @@ return function(game)
   U.wait(10)
   U.shot(game, DIR .. "/13_start_menu_wide_docking.png")
 
+  -- ------------------------------------------------ (8) classic STATS box
+  -- VELOCIDAD/PUNTOS DE EXP/SUBIDA DE NIVEL all overflowed their classic
+  -- boxes before the shorter translations (mods/es_es/lang/strings.lua);
+  -- this checks CENTERED, where the wide panel is off and only the
+  -- classic content shows.
+  game.save.options.uiLayout = "centered"
+  local classicMon = Pokemon.new(game.data, "GYARADOS", 30)
+  local csm = Screens.push(game, "SummaryMenu", classicMon)
+  csm.whiteHold = 0
+  U.wait(10)
+  U.shot(game, DIR .. "/14_summary_classic_page1.png")
+  csm.page = 2
+  U.wait(5)
+  U.shot(game, DIR .. "/15_summary_classic_page2.png")
+  game.save.options.uiLayout = "wide"
+
   U.log("SESSION_RECAP_SHOT_DONE")
   love.event.quit()
 end

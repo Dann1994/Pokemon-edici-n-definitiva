@@ -19,7 +19,11 @@ return {
   ["Enemy %s"] = "%s enemigo",
   ["ATTACK"] = "ATAQUE",
   ["DEFENSE"] = "DEFENSA",
-  ["SPEED"] = "VELOCIDAD",
+  -- pokered-plus: the STATS screen's box (src/ui/SummaryMenu.lua) and the
+  -- battle stat-check box (src/battle/BattleState.lua's StatBox) both give
+  -- this an 8-column budget on its own row -- "VELOCIDAD" overflowed both
+  -- (playtest report, a screenshot showed it sticking out); short form
+  ["SPEED"] = "RAPIDEZ",
   ["SPECIAL"] = "ESPECIAL",
   ["%s wants\nto fight!"] = "¡%s quiere\nluchar!",
   ["SILPH SCOPE\nunveiled the\vGHOST's identity!"] = "¡El SILPH SCOPE\ndesveló la\videntidad del\vFANTASMA!",
@@ -1407,8 +1411,13 @@ return {
   ["BALL"] = "BALL",
   ["STATUS/"] = "ESTADO/",
   ["OT/"] = "EO/",
-  ["EXP POINTS"] = "PUNTOS DE EXP",
-  ["LEVEL UP"] = "SUBIDA DE NIVEL",
+  -- pokered-plus: page 2's own line-box budgets both of these to 10
+  -- columns before its vertical edge (drawLineBox at tile 19, text
+  -- starting at tile 9 -- src/ui/SummaryMenu.lua) -- "PUNTOS DE EXP" (13)
+  -- and "SUBIDA DE NIVEL" (15) both ran well past it (playtest report,
+  -- a screenshot showed both sticking out); short forms with margin to spare
+  ["EXP POINTS"] = "EXP TOTAL",
+  ["LEVEL UP"] = "SIG NIVEL",
   ["PP"] = "PP",
   ["HP Left"] = "PS restantes",
   ["Pts"] = "Pts",
