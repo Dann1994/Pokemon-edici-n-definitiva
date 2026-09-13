@@ -481,12 +481,22 @@ return function(mod)
     end,
   })
 
-  -- the ancient statue: first touch = flavour, second = the encounter
+  -- the ancient statue: first touch = flavour, second = the encounter.
+  -- Same play_cry + show_text pairing the legendary birds use
+  -- (data/scripts/flavor/power_plant.lua's Zapdos: play_cry then
+  -- show_text "Gyaoo!") -- play_cry alone only ARMS ctx.pendingCry
+  -- (Commands.play_cry), the very next show_text is what actually plays
+  -- it (Commands.show_text's own comment), so without a show_text in
+  -- between the cry never played at all (playtest report: "que se
+  -- escuche su grito"). The birds' own box text is their canned ROM
+  -- onomatopoeia ("Gyaoo!"); Mew has none, so this uses the line asked
+  -- for directly.
   mod.content.commands:register("mew_event:mew_battle", {
     foreground = true,
     fn = function(ctx)
       local C = require("src.script.Commands")
       C.play_cry(ctx, "MEW", true)
+      C.show_text(ctx, "Mew...")
       C.static_battle(ctx, "MEW", 60, MEW_CAPTURED)
     end,
   })

@@ -45,7 +45,12 @@ return {
     { index = 1, name = "ISLA_SUPREMA_SAILOR", sprite = "SPRITE_SAILOR",
       movement = "STAY", range = "NONE", x = 7, y = 24,
       text = "TEXT_ISLA_SUPREMA_SAILOR" },
-    { index = 2, name = "ISLA_SUPREMA_STATUE", sprite = "SPRITE_FOSSIL",
+    -- pokered-plus: the same stone-boulder sprite Viridian Gym's puzzle
+    -- uses (SPRITE_BOULDER, static/single-frame, walker=false -- data/
+    -- generated/sprites.lua) rather than the Cinnabar Lab fossil-tank
+    -- sprite this started with, so the ancient statue actually reads as
+    -- a gym-style stone monument (playtest request)
+    { index = 2, name = "ISLA_SUPREMA_STATUE", sprite = "SPRITE_BOULDER",
       movement = "STAY", range = "NONE", x = 6, y = 3,
       text = "TEXT_ISLA_SUPREMA_STATUE" },
   },

@@ -156,6 +156,28 @@ return function(game)
   U.shot(game, DIR .. "/15_summary_classic_page2.png")
   game.save.options.uiLayout = "wide"
 
+  -- --------------------------------------------- (9) Mew statue encounter
+  -- SPRITE_BOULDER (playtest request: "la estatua que aparece en los
+  -- gimnasios") + the "Mew..." + cry before the battle (mew_event's
+  -- play_cry->show_text pairing, mirroring the legendary birds').
+  game.save.options.uiLayout = "centered"
+  for _, f in ipairs({ "EVENT_BEAT_CHAMPION_RIVAL", "MOD_MEW_DISCOVERED",
+                       "MOD_MEW_FUJI_MYSTERY", "MOD_MEW_OLD_MAP",
+                       "MOD_MEW_STATUE_SEEN" }) do
+    game.save.flags[f] = true
+  end
+  game.save.party = { Pokemon.new(game.data, "PIKACHU", 40) }
+  U.teleport(game, "ISLA_SUPREMA", 6, 4, "up")
+  U.wait(10)
+  -- 2nd interaction: "La estatua parece mirarte." / "..." / "Algo se mueve
+  -- detrás de ti." (3 pages) -> mew_event:mew_battle (cry + "Mew...")
+  for _ = 1, 6 do
+    U.wait(40)
+    U.tap(game, "a")
+  end
+  U.wait(90)
+  U.shot(game, DIR .. "/16_mew_statue_encounter.png")
+
   U.log("SESSION_RECAP_SHOT_DONE")
   love.event.quit()
 end
