@@ -47,6 +47,39 @@ T.eq(TypeChart.effectiveness("GRASS", { "STEEL" }), 5, "GRASS 0.5x vs STEEL")
 T.eq(TypeChart.effectiveness("WATER", { "FIRE" }), 20, "WATER 2x vs FIRE unchanged")
 T.eq(TypeChart.effectiveness("ELECTRIC", { "GROUND" }), 0, "ELECTRIC 0x vs GROUND unchanged")
 
+-- src/link/Fingerprint.lua hashes type_chart.matchups in registration order
+-- (not sorted, unlike every named-key map in the link surface -- see its own
+-- header comment), so the order this mod's :register/:override calls fire in
+-- is part of the LAN/online link fingerprint. The two nested loops used to
+-- walk modern.chart/row with a bare pairs(), whose order is not guaranteed
+-- across separate process launches -- confirmed live by booting two real
+-- instances of the same build and finding they disagreed on the fingerprint
+-- and refused to link battle with each other, despite being byte-identical
+-- installs. All the DARK/STEEL/FAIRY attacker rows are new (those types don't
+-- exist pre-mod), so they were all just :register'd in this call, in
+-- whatever order the two loops produced -- asserting that subsequence is
+-- sorted pins the fix (sorted iteration) rather than the bug (hash order).
+do
+  local newRows = {}
+  for _, row in ipairs(Data.type_chart.matchups) do
+    if row.attacker == "DARK" or row.attacker == "STEEL" or row.attacker == "FAIRY" then
+      newRows[#newRows + 1] = row.attacker .. ">" .. row.defender
+    end
+  end
+  T.check(#newRows > 0, "the Gen 6 chart actually added DARK/STEEL/FAIRY attacker rows")
+  local sorted = {}
+  for i, v in ipairs(newRows) do sorted[i] = v end
+  table.sort(sorted)
+  local inOrder = true
+  for i = 1, #newRows do
+    if newRows[i] ~= sorted[i] then inOrder = false break end
+  end
+  T.check(inOrder,
+    "new Gen 6 chart rows register in a deterministic sorted order "
+    .. "(not raw pairs() order, which could differ between two identical "
+    .. "installs and desync the link fingerprint)")
+end
+
 -- 3. species retypes
 T.eq(Data.pokemon.CLEFAIRY.types[1], "FAIRY", "CLEFAIRY is FAIRY")
 T.eq(Data.pokemon.MAGNEMITE.types[2], "STEEL", "MAGNEMITE is ELECTRIC/STEEL")

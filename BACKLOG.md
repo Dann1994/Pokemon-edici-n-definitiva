@@ -107,7 +107,7 @@ Catálogo — decidir cuáles activar por defecto:
 
 | # | Cambio | Vía | Estado | Notas |
 |---|---|---|---|---|
-| 6.1 | Modo de juego **LAN** | [ya existe] | HECHO (upstream) | P2P sobre lua-enet. START → LINK → HOST A GAME / unirse por IP. Puerto UDP 7777 (`POKEPORT_LINK_PORT`). Intercambios y combates Red/Blue/Yellow. Falta: probarlo con 2 instancias. |
+| 6.1 | Modo de juego **LAN** | [ya existe] | PROBADO con 2 instancias reales | P2P sobre lua-enet. Recepcionista del Centro Pokémon (Club Cable) → `LinkState` → HOST A GAME / unirse por IP. Puerto UDP 7777 (`POKEPORT_LINK_PORT`). Probado lanzando 2 procesos `lovec.exe` reales (host + guest) conectados por UDP de verdad en `127.0.0.1:7777`: hosting, emparejado, TRADE/BATTLE, y una batalla por enlace completa de principio a fin (`tests/drivers/lan_live_host.lua` / `lan_live_guest.lua`). **Bug real encontrado y corregido**: `mods/pokered_plus/main.lua` construía las filas nuevas de la tabla de tipos Gen 6 (+FAIRY +STEEL +DARK) iterando con `pairs()` sobre las tablas `modern.chart`/fila, cuyo orden de iteración no está garantizado entre procesos distintos — dos instalaciones **idénticas** podían arrancar con esas filas registradas en distinto orden, lo que cambiaba el fingerprint del link (`src/link/Fingerprint.lua` hashea `type_chart.matchups` en orden de registro, no ordenado) y hacía que el handshake las rechazara mutuamente ("Your games differ") al azar. Arreglado iterando en orden alfabético determinista (atacante y defensor). Test de regresión añadido en `mods/pokered_plus/tests/pokered_plus_test.lua` (verifica que las filas nuevas de DARK/STEEL/FAIRY se registran en orden ordenado, no en orden de tabla hash). |
 | 6.2 | Lobby online (combates, espectar, torneos) | [ya existe] | INFO | En el launcher. |
 
 ## 7. Eventos y contenido nuevo
@@ -176,7 +176,7 @@ Catálogo — decidir cuáles activar por defecto:
    (Oak) lab/rival → Bill → Isla Canela → Lance → Ruta 1 → combate → créditos.
 4. **§7.1** — qué eventos nuevos querés además de Mew y Oak.
 5. **§7b.4** — ~~guion narrativo en español~~ HECHO (2592/2592). Falta solo tu revisión en juego y ajustes de tono si algo chirría.
-6. **§6.1** — probar el modo LAN con 2 instancias.
+6. ~~**§6.1** — probar el modo LAN con 2 instancias.~~ HECHO: funciona de punta a punta y de paso se encontró y arregló un bug real de fingerprint no determinista.
 7. **§1.8 / §1.9 / §1.10** — ~~aviso de MO al interactuar~~ / ~~menús anchos~~ / ~~correr con B~~ HECHOS.
    Falta tu playtest real de los tres en el juego corriendo.
 8. **§5** — QoL: ¿subir `textSpeed` a máx, `battleStyle="set"`, `animations`?

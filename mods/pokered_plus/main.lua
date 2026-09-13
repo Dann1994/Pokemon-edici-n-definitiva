@@ -66,10 +66,28 @@ return function(mod)
     end
 
     -- full Gen 6 chart: override the vanilla row where it exists, register
-    -- it where it does not
+    -- it where it does not.  type_chart.matchups is an ORDERED array that
+    -- src/link/Fingerprint.lua hashes in registration order (not sorted,
+    -- unlike every named-key map in the surface -- see its own header
+    -- comment), so the order these :register/:override calls fire in is
+    -- part of the link fingerprint.  pairs() over modern.chart/row has no
+    -- guaranteed order across separate process launches, which let two
+    -- otherwise-identical installs boot with their Gen 6 chart rows
+    -- registered in a different order and fail the LAN/online handshake's
+    -- fingerprint check against each other for no real reason (found while
+    -- testing LAN play with two live instances). Sorting both levels makes
+    -- the registration order a pure function of the chart's content.
     local cells = 0
-    for attacker, row in pairs(modern.chart) do
-      for defender, multiplier in pairs(row) do
+    local attackers = {}
+    for attacker in pairs(modern.chart) do attackers[#attackers + 1] = attacker end
+    table.sort(attackers)
+    for _, attacker in ipairs(attackers) do
+      local row = modern.chart[attacker]
+      local defenders = {}
+      for defender in pairs(row) do defenders[#defenders + 1] = defender end
+      table.sort(defenders)
+      for _, defender in ipairs(defenders) do
+        local multiplier = row[defender]
         local pair = attacker .. ">" .. defender
         if tc:get(pair) ~= nil then
           tc:override(pair, { multiplier = multiplier })
