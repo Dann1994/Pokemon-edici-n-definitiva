@@ -1624,6 +1624,7 @@ return {
   ["PALETTE"] = "PALETA",
   ["FULL"] = "COMPLETA",
   ["WINDOWED"] = "VENTANA",
+  ["BORDERLESS"] = "SIN BORDES",
   ["CENTER"] = "CENTRO",
   ["TOP"] = "ARRIBA",
   ["SKIN"] = "PIEL",
