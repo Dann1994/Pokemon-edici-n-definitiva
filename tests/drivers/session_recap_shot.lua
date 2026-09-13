@@ -54,6 +54,19 @@ return function(game)
   U.wait(10)
   U.shot(game, DIR .. "/4_party_wide_panel_pikachu.png")
 
+  -- STEEL/FAIRY type name translation check (mods/es_es/lang/type_names.lua)
+  game.save.party = {
+    Pokemon.new(game.data, "MAGNEMITE", 20), -- Electric/Steel
+    Pokemon.new(game.data, "CLEFAIRY", 20),  -- pure Fairy
+  }
+  local pm3 = Screens.push(game, "PartyMenu", {})
+  pm3.index = 1
+  U.wait(15)
+  U.shot(game, DIR .. "/8_party_wide_panel_magnemite_steel.png")
+  pm3.index = 2
+  U.wait(10)
+  U.shot(game, DIR .. "/9_party_wide_panel_clefairy_fairy.png")
+
   -- ------------------------------------------------- (3) wide shop item box
   -- Viridian Mart's actual stock (data/scripts): a mix of long and short
   -- names, one already partly owned (POTION) and one not (PARLYZ_HEAL, so
@@ -85,6 +98,15 @@ return function(game)
   U.wait(20)
   U.shot(game, DIR .. "/6_shop_classic_item_box.png")
   game.save.options.uiLayout = "wide"
+
+  -- ------------------------------------------------- (4) party submenu box
+  game.save.party = { Pokemon.new(game.data, "BULBASAUR", 34) }
+  local pm2 = Screens.push(game, "PartyMenu", {})
+  pm2.index = 1
+  U.wait(5)
+  U.tap(game, "a") -- open STATS/SWITCH/CANCEL
+  U.wait(15)
+  U.shot(game, DIR .. "/7_party_submenu_box.png")
 
   U.log("SESSION_RECAP_SHOT_DONE")
   love.event.quit()

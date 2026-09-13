@@ -10,7 +10,7 @@
   "language": true,
   "priority": 100,
   "dependencies": [],
-  "optional_dependencies": [],
+  "optional_dependencies": ["pokered_plus"],
   "conflicts": [],
   "incompatible": [],
   "games": ["gen1"],

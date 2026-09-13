@@ -1013,7 +1013,9 @@ return {
   ["A: trade anyway"] = "A: intercambiar igual",
   ["YOURS"] = "TUYO",
   ["THEIRS"] = "SUYO",
-  ["STATS"] = "CARACT.",
+  -- pokered-plus: PARTY menu submenu box, ~6 columns wide -- "CARACT."
+  -- overflowed it (playtest report); short form
+  ["STATS"] = "DATOS",
   ["A: stats"] = "A: estadísticas",
   ["X: not on theirs"] = "X: no está en el suyo",
   ["A: trade  B: cancel"] = "A: intercambiar  B: cancelar",
@@ -1091,7 +1093,8 @@ return {
   ["%s DST,\nis that OK?"] = "%s (horario de\nverano), ¿es\ncorrecto?",
   ["%s,\nis that OK?"] = "%s,\n¿es correcto?",
   ["You don't have a\nCOIN CASE."] = "No tienes MONEDERO.",
-  ["CANCEL"] = "CANCELAR",
+  -- pokered-plus: same box as STATS above -- "CANCELAR" overflowed it
+  ["CANCEL"] = "SALIR",
   ["Current #DEX\ncompletion level:"] = "Nivel actual de la\n#DEX:",
   ["%d #MON seen\n%d #MON owned\fPROF.OAK's\nRating:"] = "%d #MON vistos\n%d #MON capturados\fEvaluación del\nPROF. OAK:",
   ["Look for #MON\nin grassy areas!"] = "¡Busca #MON en las\nzonas de hierba!",
@@ -1314,15 +1317,22 @@ return {
   ["No SURFing here!"] = "¡Aquí no se puede\nusar SURF!",
   ["Nothing to CUT!"] = "¡No hay nada que\nCORTAR!",
   ["{RAM:wNameBuffer} can't\nuse TELEPORT now."] = "{RAM:wNameBuffer} no\npuede usar\nTELETRANSPORTE\nahora.",
-  ["SWITCH"] = "CAMBIAR",
+  -- pokered-plus: same box as STATS above -- "CAMBIAR" overflowed it
+  ["SWITCH"] = "CAMBIO",
   ["FLY"] = "VUELO",
-  ["FLASH"] = "DESTELLO",
+  -- pokered-plus: these four ride the PARTY menu's field-move submenu box,
+  -- a fixed-width classic box the label column budget is tight in (as
+  -- little as 6-8 columns depending on which other field moves share the
+  -- list, see PartyMenu.lua's FIELD_MOVE_X) -- their spelled-out forms
+  -- (DESTELLO/TELETRANSPORTE/EXCAVAR) overflowed it (issue reported after
+  -- playtest: CANCEL/SWITCH did too, see those entries above).
+  ["FLASH"] = "FLASH",
   ["CUT"] = "CORTE",
   ["SURF"] = "SURF",
   ["STRENGTH"] = "FUERZA",
   ["SOFTBOILED"] = "AGUAHUEVO",
-  ["TELEPORT"] = "TELETRANSPORTE",
-  ["DIG"] = "EXCAVAR",
+  ["TELEPORT"] = "TELEPORT",
+  ["DIG"] = "CAVAR",
   ["Move POKéMON\nwhere?"] = "¿Adónde mover al\nPOKéMON?",
   ["Use TM on which\nPOKéMON?"] = "¿En qué POKéMON\nusar el MT?",
   ["Use item on which\nPOKéMON?"] = "¿En qué POKéMON\nusar el objeto?",
