@@ -930,6 +930,18 @@ function Renderer:setBattleUIAnchor(x, y, w, h, anchor)
               self.battleHUDCanvas or self.canvas, false)
 end
 
+-- UI LAYOUT = WIDE corner docking (e.g. the START menu, Menu.lua's own
+-- `anchor` opt): bypasses setUIAnchor's uiCentered gate, because WIDE does
+-- not clear uiCentered the way DYNAMIC does (that gate's own comment) --
+-- a menu already opting into a fixed screen corner wants the real window
+-- edge under EITHER layout, not just DYNAMIC. Still respects
+-- uiAnchorHold: a state composing its own screen (a battle) keeps every
+-- element inside it, same reasoning setUIAnchor documents.
+function Renderer:setWideCornerAnchor(x, y, w, h, anchor)
+  if self.uiAnchorHold then return end
+  addUIAnchor(self, x, y, w, h, anchor, false, self.canvas, true)
+end
+
 -- zones: optional list of SGB palette regions (see PaletteFX) in
 -- 160x144 UI space, applied to the UI pass.  worldZones: optional
 -- regions in world-canvas pixels (overworld survey zoom colors each

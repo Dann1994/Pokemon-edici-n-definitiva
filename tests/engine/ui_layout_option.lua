@@ -41,14 +41,18 @@ T.eq(Game.dynamicUI({}), false, "a save with no options at all is centered")
 T.eq(Game.dynamicUI(nil), false, "and no save at all is centered")
 
 -- WIDE is a third value: the overworld dialogue box spans the playfield,
--- nothing else moves.  It does NOT turn dynamicUI on.
+-- nothing else moves.  It does NOT turn dynamicUI on -- so the zoom
+-- step-down stays off under WIDE (see "the scale half of it" below), and
+-- setUIAnchor's own DYNAMIC-only gate stays shut for it too.  The START
+-- menu still docks under WIDE, just through a separate path that does not
+-- run through dynamicUI at all -- see Renderer:setWideCornerAnchor below.
 T.eq(Game.wideUI({ options = { uiLayout = "wide" } }), true, "WIDE reads true")
 T.eq(Game.wideUI({ options = { uiLayout = "dynamic" } }), false,
   "DYNAMIC is not WIDE")
 T.eq(Game.wideUI({ options = {} }), false, "and an old save is not WIDE")
 T.eq(Game.wideUI(nil), false, "and no save at all is not WIDE")
 T.eq(Game.dynamicUI({ options = { uiLayout = "wide" } }), false,
-  "WIDE leaves the START menu / zoom step-down alone")
+  "WIDE leaves the zoom step-down alone (dynamicUI itself stays false)")
 
 -- ------------------------------------------------------------- the gate
 
@@ -76,6 +80,59 @@ T.eq(anchorsAfter({ centered = false }), 2,
 T.eq(anchorsAfter({ centered = false, hold = true }), 0,
   "a battle still holds the anchors while DYNAMIC is on")
 T.eq(anchorsAfter({ centered = true, hold = true }), 0, "and with it off")
+
+-- ------------------------------------------------ the WIDE corner anchor
+
+-- setUIAnchor itself stays DYNAMIC-only (unchanged above); a menu that
+-- opts into a screen corner (Menu.lua's own `anchor` field, only the
+-- START menu today) additionally tries setWideCornerAnchor under WIDE,
+-- which bypasses uiCentered on purpose -- WIDE never clears it, only
+-- DYNAMIC does (this file's own "WIDE is a third value" section above).
+local function wideAnchorsAfter(opts)
+  Renderer.uiAnchors = nil
+  Renderer.uiAnchorHold = opts.hold or false
+  Renderer:setWideCornerAnchor(80, 0, 80, 88, "topright")
+  local n = #(Renderer.uiAnchors or {})
+  Renderer.uiAnchors, Renderer.uiAnchorHold = nil, false
+  return n
+end
+T.eq(wideAnchorsAfter({}), 1, "setWideCornerAnchor docks regardless of uiCentered")
+T.eq(wideAnchorsAfter({ hold = true }), 0,
+  "...but still respects uiAnchorHold, same as setUIAnchor")
+
+do
+  local Menu = require("src.ui.Menu")
+  local DataFx = T.fixtures.load()
+  require("src.render.Font").load(DataFx)
+  local function menuGame(uiLayout)
+    return { data = DataFx, save = { options = { uiLayout = uiLayout } },
+             renderer = Renderer,
+             stack = { states = {}, push = function() end, pop = function() end } }
+  end
+  local items = { { label = "A" }, { label = "B" } }
+
+  Renderer.uiAnchors, Renderer.uiCentered = nil, true
+  local wideGame = menuGame("wide")
+  local wideMenu = Menu.new(wideGame, items, { anchor = "topright" })
+  wideMenu:draw()
+  T.eq(#(Renderer.uiAnchors or {}), 1,
+    "UI LAYOUT = WIDE: an anchor-opted menu docks (setWideCornerAnchor)")
+  T.eq(Renderer.uiAnchors[1].anchor, "topright", "at the requested corner")
+  Renderer.uiAnchors = nil
+
+  local centeredGame = menuGame("centered")
+  local centeredMenu = Menu.new(centeredGame, items, { anchor = "topright" })
+  centeredMenu:draw()
+  T.eq(Renderer.uiAnchors, nil,
+    "UI LAYOUT = CENTERED: the same menu stays in the letterbox (as before)")
+
+  local plainMenu = Menu.new(wideGame, items) -- no `anchor` opt at all
+  plainMenu:draw()
+  T.eq(Renderer.uiAnchors, nil,
+    "WIDE does not dock a menu that never asked for a corner")
+
+  Renderer.uiCentered = false
+end
 
 -- --------------------------------------------------------- the save panel
 

@@ -118,9 +118,18 @@ function Menu:draw()
   -- edge (the START menu asks for "topright").  Only menus that ask for it
   -- move; every other menu is placed exactly as before.
   local r = self.anchor and self.game and self.game.renderer
-  if r and r.setUIAnchor then
-    r:setUIAnchor(self.tx * 8, self.ty * 8,
-                  self.tw * 8, self.th * 8, self.anchor)
+  if r then
+    -- UI LAYOUT = WIDE also wants a corner-docked menu flush with the
+    -- real window edge, not just DYNAMIC (setUIAnchor's own gate is
+    -- DYNAMIC-only -- see Renderer:setWideCornerAnchor's comment).
+    local Game = require("src.core.Game")
+    if r.setWideCornerAnchor and Game.wideUI(self.game.save) then
+      r:setWideCornerAnchor(self.tx * 8, self.ty * 8,
+                            self.tw * 8, self.th * 8, self.anchor)
+    elseif r.setUIAnchor then
+      r:setUIAnchor(self.tx * 8, self.ty * 8,
+                    self.tw * 8, self.th * 8, self.anchor)
+    end
   end
   Font.drawBox(self.tx, self.ty, self.tw, self.th)
   -- PlaceString at hlcoord 3,0 writes over the border row it was just
