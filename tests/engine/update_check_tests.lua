@@ -13,7 +13,7 @@ local Json = require("src.link.Json")
 
 -- releaseUrl is the fixed public landing page the UI links on needs_full
 eq(Check.releaseUrl(),
-   "https://github.com/bryanthaboi/gen1recomp/releases/latest",
+   "https://github.com/Dann1994/Pokemon-edici-n-definitiva/releases/latest",
    "releaseUrl points at the repo's latest release")
 
 -- parseRelease: a well-formed release with the .love payload and its sums

@@ -450,7 +450,7 @@ local function returnToLauncher(opts)
 
   if love.window and love.window.setTitle then
     local Version = require("src.core.Version")
-    love.window.setTitle(Version.title("Gen 1 Recompilation Project"))
+    love.window.setTitle(Version.title(Version.appName))
   end
 
   Importer = makeLauncher({ initialTab = opts and opts.tab or nil })
@@ -509,7 +509,7 @@ function bootGame(version, cartId, opts)
   if love.window and love.window.setTitle then
     local Version = require("src.core.Version")
     love.window.setTitle(Version.title(
-      GameVersion.info().displayName .. " (Gen 1 Recompilation Project)"))
+      Version.appName .. " (" .. GameVersion.info().displayName .. ")"))
   end
   -- Gen 2: Gen 1 Game:load cannot consume a Gen 2 cache -- different generated
   -- tables, save shape and screen registry -- so Gold and Silver boot their

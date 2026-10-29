@@ -24,6 +24,10 @@ local Version = {
 
 local DEV_PLACEHOLDER = "0.0.0-dev"
 
+-- pokered-plus: the name this fork's builds show (window title, installer,
+-- Android launcher label -- the last two set in their build scripts).
+Version.appName = "Pokémon Edición Definitiva"
+
 local function readFile(path)
   local handle = io.open(path, "rb")
   if not handle then return nil end
@@ -98,7 +102,7 @@ end
 -- ("gen1recomp v0.0.0-dev"); release builds are just the base name so Linux
 -- window chrome and taskbars do not read "gen1recomp 0.1.73".
 function Version.title(base)
-  base = base or "gen1recomp"
+  base = base or Version.appName
   if Version.isDev() then
     return base .. " v" .. Version.engine
   end

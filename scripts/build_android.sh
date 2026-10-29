@@ -34,8 +34,8 @@ ANDROID_DIR="$ROOT/mobile/android"
 EMBED_ASSETS="$ANDROID_DIR/app/src/embed/assets"
 LOVE_FILE="$EMBED_ASSETS/game.love"
 DIST="$ROOT/dist/android"
-APP_NAME="gen1recomp"
-APPLICATION_ID="com.theboisclub.pokemonred"
+APP_NAME="Pokémon Edición Definitiva" # pokered-plus fork identity
+APPLICATION_ID="com.dann1994.pokemonedicion" # never upstream's: a friend may have both
 LOVE_ANDROID_VERSION="11.5a"
 NDK_VERSION="25.2.9519653"
 ANDROID_API="36"
@@ -350,9 +350,18 @@ def set_prop(text, key, value):
         return pat.sub(line, text)
     return text.rstrip() + "\n" + line + "\n"
 
-# Prefer plain app.name; clear byte-array form so it cannot win.
+# Plain app.name for an ASCII name; anything else goes through
+# app.name_byte_array (UTF-8 bytes, decoded by app/build.gradle), since
+# gradle.properties is read as ISO-8859-1 and would mangle "Pokémon".
+# Only one of the two may be set, so clear the other first.
 text = re.sub(r"(?m)^app\.name_byte_array=.*\n?", "", text)
-text = set_prop(text, "app.name", name)
+text = re.sub(r"(?m)^app\.name=.*\n?", "", text)
+if all(ord(ch) < 128 for ch in name):
+    text = set_prop(text, "app.name", name)
+else:
+    raw = name.encode("utf-8")
+    text = set_prop(text, "app.name_byte_array",
+                    ",".join(str(b - 256 if b > 127 else b) for b in raw))
 text = set_prop(text, "app.application_id", app_id)
 text = set_prop(text, "app.orientation", "fullUser")
 if version:
@@ -400,15 +409,19 @@ pack_game_love() {
   # APK, so the mod manager's Delete can't remove it and it reappears every
   # launch.  Pokewalker ships as an importable .zip instead, which gives it
   # a real install/upgrade/delete lifecycle.
+  # pokered-plus: the fork's own mods DO ship fused (same set as
+  # scripts/pack_love.sh) -- they are the game, not optional add-ons, so
+  # "can't be deleted from the mod manager" is the behaviour we want.
   # The launcher UI kit lives at src/ui/kit (inside src/, packed wholesale);
   # the vendored libs/flexlove tree it replaced is gone.
   (cd "$ROOT" && zip -q -9 -r "$LOVE_FILE" \
-    main.lua conf.lua src data assets tools/save-editor \
+    main.lua conf.lua src data assets mods tools/save-editor \
     tools/rom_manifest.json tools/rom_manifest_blue.json \
     tools/rom_manifest_yellow.json tools/rom_manifest_gold.json \
     tools/rom_manifest_silver.json tools/rom_manifest_crystal.json \
     -x '*.DS_Store' -x '*/.git/*' -x '*/.DS_Store' \
-    -x 'data/generated/*' -x 'assets/generated/*')
+    -x 'data/generated/*' -x 'assets/generated/*' \
+    -x 'mods/examples/*' -x 'mods/*/tests/*' -x 'mods/*-worksheet/*')
   # List once and match against the captured text: piping unzip straight into
   # grep under `set -o pipefail` SIGPIPEs unzip as soon as grep exits early,
   # and the pipeline's 141 outranks grep's own status.  For the generated-data

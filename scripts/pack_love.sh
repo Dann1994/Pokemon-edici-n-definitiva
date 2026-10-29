@@ -46,12 +46,17 @@ say "packing game.love"
 rm -f "$OUTPUT"
 # The launcher UI kit lives at src/ui/kit (inside src/, packed wholesale);
 # the vendored libs/flexlove tree it replaced is gone.
+# pokered-plus: mods/ ships too -- the fork IS its mods (pokered_plus,
+# es_es/es_419, mew_event, oak_event); the loader finds them inside the
+# .love the same way it does in a source checkout. Examples and each mod's
+# own tests/ and translator worksheets stay out.
 (cd "$ROOT" && zip -q -9 -r "$OUTPUT" \
-  main.lua conf.lua src data assets tools/save-editor \
+  main.lua conf.lua src data assets mods tools/save-editor \
   tools/rom_manifest.json tools/rom_manifest_blue.json \
   tools/rom_manifest_yellow.json tools/rom_manifest_gold.json \
   tools/rom_manifest_silver.json tools/rom_manifest_crystal.json \
-  -x '*.DS_Store' 'data/generated/*' 'assets/generated/*')
+  -x '*.DS_Store' 'data/generated/*' 'assets/generated/*' \
+     'mods/examples/*' 'mods/*/tests/*' 'mods/*-worksheet/*')
 if [ -f "$ROOT/PATCH_NOTES.md" ]; then
   (cd "$ROOT" && zip -q "$OUTPUT" PATCH_NOTES.md)
 fi

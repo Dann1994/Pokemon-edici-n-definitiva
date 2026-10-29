@@ -61,7 +61,8 @@ local osName    = (love.system and love.system.getOS and love.system.getOS()) or
 local isWindows = osName == "Windows"
 local saveDir   = love.filesystem.getSaveDirectory()
 
-local API_URL = "https://api.github.com/repos/bryanthaboi/gen1recomp/releases/latest"
+-- pokered-plus: same repo as Check.REPO (this fork's own releases)
+local API_URL = "https://api.github.com/repos/Dann1994/Pokemon-edici-n-definitiva/releases/latest"
 
 -- ---------------------------------------------------------------------------
 -- shell / fetch

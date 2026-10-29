@@ -20,7 +20,9 @@
 local Check = {}
 local Platform = require("src.core.Platform")
 
-Check.REPO = "bryanthaboi/gen1recomp"
+-- pokered-plus: this fork ships its own releases; pointing at upstream would
+-- "update" a friend's install to vanilla gen1recomp and drop every fork mod.
+Check.REPO = "Dann1994/Pokemon-edici-n-definitiva"
 
 -- Full native packages are deliberately named by release target, not by the
 -- generic .love payload.  Keeping the mapping here makes the release parser,
