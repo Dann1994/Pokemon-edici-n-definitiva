@@ -394,6 +394,9 @@ function Renderer:setWideItemAnchor(x, y, w, h)
   self.uiAnchors[#self.uiAnchors + 1] = {
     x = x, y = y, w = w, h = h, anchor = "top",
     windowClamped = true, canvas = self.wideItemCanvas, extract = false,
+    -- the SGB zones only span the classic 160px: without widening them the
+    -- palette blit scissors this canvas back to that width (widenZones)
+    widenZones = true,
   }
 end
 
@@ -867,6 +870,24 @@ function Renderer:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
   love.graphics.setScissor()
   love.graphics.setShader()
 end
+
+-- A copy of an SGB zone list for a canvas wider than the classic one it was
+-- built for: every zone that reaches the classic right edge (uiw) runs on to
+-- `right` instead. blitCanvas draws only inside its zones' scissors, so a
+-- wide anchor blitted with the unwidened list lost everything past uiw --
+-- the bag/shop/PC item box cut off at the letterbox edge under any palette
+-- mode that zones the screen (the fork's default Yellow colors included).
+local function widenZones(zones, uiw, right)
+  local out = {}
+  for i, z in ipairs(zones) do
+    local c = {}
+    for k, v in pairs(z) do c[k] = v end
+    if c.x + c.w >= uiw and right > c.x + c.w then c.w = right - c.x end
+    out[i] = c
+  end
+  return out
+end
+Renderer._widenZones = widenZones
 
 -- Take a rect out of a list of rects, splitting each overlapped one into up
 -- to four pieces.  Used to vacate an anchored UI region from the letterbox
@@ -1399,7 +1420,9 @@ function Renderer:endFrame(zones, worldZones)
              p.dx - p.a.x * sx, p.dy - p.a.y * Uy,
              clipToView(p.dx, p.dy, p.dw, p.dh))
       else
-        blit(p.a.canvas or self.canvas, Ux, Uy, zones, Ux, Uy,
+        local zl = zones
+        if zl and p.a.widenZones then zl = widenZones(zl, uiw, p.a.x + p.a.w) end
+        blit(p.a.canvas or self.canvas, Ux, Uy, zl, Ux, Uy,
              p.dx - p.a.x * Ux, p.dy - p.a.y * Uy,
              clipToView(p.dx, p.dy, p.dw, p.dh))
       end

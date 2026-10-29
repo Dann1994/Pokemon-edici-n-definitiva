@@ -363,22 +363,26 @@ local function wantsWideItemBox(self)
 end
 
 -- UI LAYOUT = WIDE, monPreview lists only (BACKLOG.md §1.9 phase 4): the
--- room right of the classic box's own right edge (column 20), up to the
--- widened box's inner border. Below MON_PREVIEW_MIN_TILES there is no room
--- for a sprite plus a 9-letter Spanish type name, so the box just stays
--- wide-and-empty the way phase 2 already left it.
-local MON_PREVIEW_MIN_TILES = 8
+-- room right of the rows' own classic columns -- clear of a 3-digit
+-- ":L100" level (qtyX + 5 glyphs = column 19) -- up to the widened box's
+-- inner border. A 16:9 window leaves only 6 tiles there (the box tops out
+-- at 26 tiles wide from tx=4), so the sprite alone needs MIN_W and the
+-- type names only draw once a 9-letter one (ELÉCTRICO) fits whole: a cut
+-- "ELÉCT." reads worse than no type at all.
+local MON_PREVIEW_X0 = 19 * 8
+local MON_PREVIEW_MIN_W = 40
+local MON_PREVIEW_TYPES_W = 72
 local MON_PREVIEW_SPRITE_TOP, MON_PREVIEW_SPRITE_BOTTOM = 24, 64
 local MON_PREVIEW_TYPE_Y = 72
 
 local function monPreviewColumn(g)
-  local x0 = (ITEM_BOX.tx + ITEM_BOX.tw) * 8
   local x1 = (g.tx + g.tw - 1) * 8
-  if (x1 - x0) / 8 < MON_PREVIEW_MIN_TILES then return nil end
-  return x0, x1
+  if x1 - MON_PREVIEW_X0 < MON_PREVIEW_MIN_W then return nil end
+  return MON_PREVIEW_X0, x1
 end
 
--- Sprite + TYPE1/TYPE2 of the highlighted row's mon, centred in its column.
+-- Sprite (+ TYPE1/TYPE2 when they fit) of the highlighted row's mon,
+-- centred in its column.
 -- Own design (same idea as PartyMenu/PokedexMenu's panels, laid out for a
 -- shorter box). A true-color sprite skips PaletteFX.markTrueColor: this
 -- draws onto the wide item canvas, whose coordinates are not the UI
@@ -401,6 +405,7 @@ function ListMenu:drawMonPreview(x0, x1)
     love.graphics.draw(img, math.floor(x0 + ((x1 - x0) - pw) / 2),
       MON_PREVIEW_SPRITE_BOTTOM - ph, 0, scale, scale)
   end
+  if x1 - x0 < MON_PREVIEW_TYPES_W then return end
   local TypeChart = require("src.battle.TypeChart")
   love.graphics.setColor(0, 0, 0, 1)
   for i = 1, 2 do
@@ -498,7 +503,10 @@ function ListMenu:drawItemBox()
     -- closed out, straight onto the ordinary classic UI canvas, exactly
     -- where it always has.
     r:endWideItemPass(previous)
-    r:setWideItemAnchor(0, box.ty * 8, w, r.HEIGHT)
+    -- the region runs from the box's top row to the canvas bottom: a full
+    -- r.HEIGHT starting at ty*8 overran the window, and windowClamped then
+    -- pulled the whole box up by exactly that much
+    r:setWideItemAnchor(0, box.ty * 8, w, r.HEIGHT - box.ty * 8)
   end
   -- players_pc.asm:97/151/205 PrintText the prompt before DisplayListMenuID,
   -- so the bottom box sits under the list from the first frame

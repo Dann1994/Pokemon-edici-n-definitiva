@@ -55,6 +55,23 @@ do
   g.getDimensions, g.getPixelDimensions = realDims, realPixelDims
 end
 
+-- ------------------------------------------------------- widenZones
+-- The SGB zones a palette mode hands the UI blit only span the classic
+-- 160px; the wide item anchor is blitted through them, and blitCanvas draws
+-- only inside its zones' scissors -- so every pixel past 160 was dropped
+-- (the box cut at the letterbox edge under the default Yellow colors).
+do
+  local wz = Renderer._widenZones
+  local zones = {
+    { colors = "whole", x = 0, y = 0, w = 160, h = 144 },
+    { colors = "inner", x = 16, y = 24, w = 40, h = 40 },
+  }
+  local out = wz(zones, 160, 208)
+  eq(out[1].w, 208, "a zone reaching the classic right edge runs on to the wide one")
+  eq(out[2].w, 40, "a zone that stops short of it is left alone")
+  eq(zones[1].w, 160, "and the caller's own list is not mutated")
+end
+
 local realFont = package.loaded["src.render.Font"]
 local calls = {}
 local FontStub
@@ -182,7 +199,8 @@ do
   eq(a1.x, 0, "anchored so the wide canvas's own pixel 0 lands on the")
   eq(a1.y, 16, "classic letterbox's own origin -- tx=4 keeps its old spot")
   eq(a1.w, 240, "spanning the full wide canvas pixel width (30 tiles)")
-  eq(a1.h, 144, "the classic height -- this box never grows taller")
+  eq(a1.h, 144 - 16, "from its own top row down to the canvas bottom -- a "
+     .. "full 144 starting at y=16 overran the window and got clamped up")
 
   -- POTION's price ("¥300") still right-aligns off the SAME relative
   -- offset from the box's new (wider) right edge as it does classically

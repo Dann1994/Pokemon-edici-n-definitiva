@@ -1,10 +1,12 @@
 -- UI LAYOUT = WIDE: Bill's PC mon lists (BoxMenu.lua's WITHDRAW / DEPOSIT /
 -- RELEASE) spend the item box's extra width on a preview of the highlighted
--- row's mon -- sprite + TYPE1/TYPE2 (ListMenu:drawMonPreview, opts.monPreview).
--- The rows themselves, :L level included, stay in their classic columns so
--- the preview gets the whole strip right of column 20. Off outside WIDE,
--- off under a window too narrow for the column, blank on CANCEL, and never
--- reached by an item box that did not ask for it (the shop, the PC items).
+-- row's mon -- sprite, plus TYPE1/TYPE2 once a 9-letter name fits whole
+-- (ListMenu:drawMonPreview, opts.monPreview). The rows themselves, :L level
+-- included, stay in their classic columns so the preview gets the strip from
+-- column 19 (clear of ":L100") to the box's inner border. A 16:9 window is
+-- 26 tiles: sprite only. Off outside WIDE, off when the strip is under 40px,
+-- blank on CANCEL, and never reached by an item box that did not ask for it
+-- (the shop, the PC items).
 --   luajit tests/engine/box_wide_preview.lua
 
 package.path = "./?.lua;./?/init.lua;" .. package.path
@@ -127,13 +129,13 @@ do
   eq(#images, 1, "and drawn once")
   local img = images[1]
   if img then
-    check(img.x >= 160, "the sprite sits right of the classic box (column 20+)")
+    check(img.x >= 152, "the sprite sits clear of the level column (column 19+)")
     check(img.x + 56 * img.sx <= (4 + 26 - 1) * 8,
           "and inside the widened box's own inner border")
     eq(img.y + 56 * img.sx, 64, "bottom-anchored above the type rows")
     check(img.sx <= 1, "never scaled up")
   end
-  check(found("draw", function(c) return c[2] == "ELECTRIC" and c[3] >= 160 end) ~= nil,
+  check(found("draw", function(c) return c[2] == "ELECTRIC" and c[3] >= 152 end) ~= nil,
         "TYPE1 draws in the preview column")
   local electric = 0
   for _, c in ipairs(calls) do
@@ -150,6 +152,21 @@ do
   check(found("draw", function(c) return c[2] == "FLYING" end) ~= nil, "TYPE2 = FLYING")
 end
 
+-- ------------------------------------------------- 16:9 window (26 tiles)
+
+do
+  reset()
+  newList{ tiles = 26 }:draw()
+  eq(#images, 1, "a 16:9 window still previews the sprite")
+  local img = images[1]
+  if img then
+    check(img.x >= 152 and img.x + 56 * img.sx <= (4 + 22 - 1) * 8,
+          "scaled down to fit the 6-tile strip")
+  end
+  eq(found("draw", function(c) return c[2] == "ELECTRIC" end), nil,
+     "but no type names: a 9-letter one would not fit whole")
+end
+
 -- ------------------------------------------------------------- blank cases
 
 do
@@ -160,11 +177,11 @@ end
 
 do
   reset()
-  newList{ tiles = 27 }:draw() -- 7 tiles past column 20: below the minimum
+  newList{ tiles = 24 }:draw() -- a 32px strip: below the 40px minimum
   eq(#spriteAsks, 0, "a window too narrow for the column: no preview")
   local lvl = found("draw", function(c) return c[2] == ":L12" end)
   if lvl then
-    eq(lvl[3], (4 + 23 - 6) * 8, "and the rows keep phase 2's wide geometry")
+    eq(lvl[3], (4 + 20 - 6) * 8, "and the rows keep phase 2's wide geometry")
   end
 end
 
