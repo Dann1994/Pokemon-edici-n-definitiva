@@ -1,6 +1,19 @@
 local Prelaunch = {}
 Prelaunch.__index = Prelaunch
 
+-- pokered-plus: route the screen's lines through the translation catalog
+-- (main.lua preloads the launcher strings before any shortcut boots).
+-- Guarded so a bare test harness without Strings keeps the English text.
+local function tr(text, ...)
+  local ok, Strings = pcall(require, "src.core.Strings")
+  if ok and type(Strings) == "table" and Strings.get then
+    local got, out = pcall(Strings.get, text, ...)
+    if got and type(out) == "string" then return out end
+  end
+  if select("#", ...) > 0 then return string.format(text, ...) end
+  return text
+end
+
 Prelaunch.UPDATE_BUDGET = 25
 Prelaunch.SYNC_BUDGET = 30
 Prelaunch.MARKER = "launch_update.txt"
@@ -113,10 +126,10 @@ function Prelaunch:_advance()
   self.stage = self.stages[self.index]
   if self.stage == nil then return self:_finish("boot") end
   if self.stage == "update" then
-    self.status = "Checking for updates..."
+    self.status = tr("Checking for updates...")
     pcall(self.check.start, true)
   elseif self.stage == "sync" then
-    self.status = "Syncing saves..."
+    self.status = tr("Syncing saves...")
     pcall(self.engine.syncNow, self.engine)
   end
 end
@@ -126,16 +139,16 @@ function Prelaunch:_updateStage()
   st = (ok and type(st) == "table") and st or nil
   local status = st and st.status or "error"
   if status == "available" then
-    self.status = "Downloading update..."
+    self.status = tr("Downloading update...")
     pcall(self.check.download)
   elseif status == "downloading" then
-    self.status = string.format("Updating %d%%",
+    self.status = tr("Updating %d%%",
       math.floor((tonumber(st.progress) or 0) * 100))
   elseif status == "ready" then
     if self.fs and self.fs.write then
       pcall(self.fs.write, Prelaunch.MARKER, "1")
     end
-    self.status = "Restarting..."
+    self.status = tr("Restarting...")
     pcall(self.restart)
     return self:_finish("restart")
   elseif status ~= "checking" then
@@ -186,7 +199,7 @@ function Prelaunch:draw()
   local h = g.getHeight and g.getHeight() or 0
   g.printf(tostring(self.status or ""), 0, math.floor(h / 2) - 12, w, "center")
   g.setColor(1, 1, 1, 0.55)
-  g.printf("Press any button to skip", 0, math.floor(h / 2) + 8, w, "center")
+  g.printf(tr("Press any button to skip"), 0, math.floor(h / 2) + 8, w, "center")
   g.setColor(1, 1, 1, 1)
 end
 

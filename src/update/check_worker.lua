@@ -308,7 +308,11 @@ local function launchDownload(url, partAbs, doneAbs)
       .. "cd /d \"%~dp0\"\r\n"
       .. "curl -fsSL --connect-timeout 15 --max-time 900 -o \""
       .. partAbs .. "\" \"" .. url .. "\"\r\n"
-      .. "type nul > \"" .. doneAbs .. "\"\r\n")
+      .. "type nul > \"" .. doneAbs .. "\"\r\n"
+      -- pokered-plus: `start` runs a .bat through `cmd /K`, which stays
+      -- alive (hidden, cwd in updates/, so that folder can't be removed)
+      -- after the batch ends; an explicit exit ends it with the transfer.
+      .. "exit\r\n")
     os.execute('start "" /b ' .. shq(saveDir .. "/" .. batRel))
   else
     -- ( ... ) & backgrounds the whole group so os.execute returns at once.

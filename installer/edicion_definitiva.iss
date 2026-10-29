@@ -62,6 +62,9 @@ Source: "pokebola.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\pokebola.ico"
+; the plain shortcut boots straight into Red (main.lua); this one opens the
+; launcher instead -- mod manager, online lobby, importing another ROM
+Name: "{group}\{#AppName} (launcher)"; Filename: "{app}\{#AppExe}"; Parameters: "--launcher"; IconFilename: "{app}\pokebola.ico"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\pokebola.ico"; Tasks: desktopicon
 

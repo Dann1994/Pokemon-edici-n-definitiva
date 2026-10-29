@@ -690,6 +690,21 @@ function love.load(args)
 
   local RomImporter = require("src.import.RomImporter")
   local resolvedLaunch = LaunchOptions.resolveRequest(arg, args)
+  -- pokered-plus: a plain launch of the packaged game (the installer's
+  -- shortcuts, a double-click on the exe, the APK's icon) goes straight into
+  -- Red -- what the old "Jugar Pokemon Red.bat" did -- with Prelaunch's
+  -- "update" stage on the way in: it checks this fork's releases, downloads a
+  -- newer .love, restarts into it, and otherwise boots the game. A Red that
+  -- is not imported yet still lands on the launcher's Red tab (see
+  -- startLaunchRequest), and --launcher, an explicit --game / cart / URI, or
+  -- a source checkout (not fused) keep upstream's behavior.
+  if not resolvedLaunch.game and not resolvedLaunch.launcher
+      and not resolvedLaunch.cartSpecified
+      and love.filesystem.isFused and love.filesystem.isFused() then
+    resolvedLaunch.game = "red"
+    resolvedLaunch.tasks = resolvedLaunch.tasks or {}
+    resolvedLaunch.tasks.update = true
+  end
   local forceImport = os.getenv("POKEPORT_FORCE_IMPORT") == "1"
   local importPath = os.getenv("POKEPORT_IMPORT_ROM")
   -- Scripted / headless runs pick their game from POKEPORT_VERSION, then

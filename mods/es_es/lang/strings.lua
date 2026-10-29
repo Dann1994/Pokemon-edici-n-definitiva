@@ -414,6 +414,12 @@ return {
   ["Update v"] = "Actualizar a v",
   ["Restart to update"] = "Reinicia para actualizar",
   ["Check for updates"] = "Buscar actualizaciones",
+  -- the update/sync screen a direct launch shows first (src/core/Prelaunch.lua)
+  ["Checking for updates..."] = "Buscando actualizaciones...",
+  ["Downloading update..."] = "Descargando actualización...",
+  ["Restarting..."] = "Reiniciando...",
+  ["Syncing saves..."] = "Sincronizando partidas...",
+  ["Press any button to skip"] = "Pulsa cualquier botón para saltar",
   -- update control labels from src/update/Check.lua:fullUpdateAction
   -- (shown when a release needs the whole app, not just the .love payload)
   ["Open releases"] = "Ver versiones",
