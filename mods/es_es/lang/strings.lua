@@ -1278,6 +1278,10 @@ return {
   ["Which move should"] = "Qué movimiento hay",
   ["be forgotten?"] = "que olvidar?",
   ["YOUR NAME?"] = "¿TU NOMBRE?",
+  -- naming screen case switch (src/ui/NamingScreen.lua): the cell keeps the
+  -- English token findMeta looks for and is translated only when drawn
+  ["lower case"] = "minúsculas",
+  ["UPPER CASE"] = "MAYÚSCULAS",
   ["NEW NAME"] = "NUEVO NOMBRE",
   ["NAME"] = "NOMBRE",
   ["Hello there!\nWelcome to the\vworld of POKéMON!\fMy name is OAK!\nPeople call me\vthe POKéMON PROF!"] = "",

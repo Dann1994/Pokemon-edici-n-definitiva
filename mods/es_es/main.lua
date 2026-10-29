@@ -119,13 +119,20 @@ return function(mod)
   end)
 
   -- ---- name entry ---------------------------------------------------
-  -- The naming screen's letter grid.  Leave lang/naming.lua returning nil
-  -- to keep the English alphabet.
+  -- The naming screen's letter grid: lang/naming.lua replaces rows 1-4 of
+  -- each page and keeps the rest of the grid it is handed (row 5's ED
+  -- cell, row 6's case switch), so the screen's confirm/case-flip lookup
+  -- still finds them. Leave lang/naming.lua returning {} to keep the
+  -- English alphabet. (mod.hooks only offers wrap(name, fn(next, ...)).)
   local grid = catalog("naming")
   if grid.upper then
-    mod.hooks:on("ui.naming.grid", function(base, ctx)
-      local want = ctx.lower and grid.lower or grid.upper
-      return want or base
+    mod.hooks:wrap("ui.naming.grid", function(nextGrid, base, ctx)
+      base = nextGrid(base, ctx)
+      local want = ctx and ctx.lower and grid.lower or grid.upper
+      if type(base) ~= "table" or not want then return base end
+      local out = {}
+      for i, row in ipairs(base) do out[i] = want[i] or row end
+      return out
     end)
   end
 
