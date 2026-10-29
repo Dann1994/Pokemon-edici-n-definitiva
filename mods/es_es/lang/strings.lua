@@ -411,9 +411,16 @@ return {
   ["Checking..."] = "Comprobando...",
   ["Updating %d%%"] = "Actualizando %d%%",
   ["Downloading app %d%%"] = "Descargando app %d%%",
-  ["Update v"] = "Versión ",
+  ["Update v"] = "Actualizar a v",
   ["Restart to update"] = "Reinicia para actualizar",
   ["Check for updates"] = "Buscar actualizaciones",
+  -- update control labels from src/update/Check.lua:fullUpdateAction
+  -- (shown when a release needs the whole app, not just the .love payload)
+  ["Open releases"] = "Ver versiones",
+  ["Install Android update"] = "Instalar actualización",
+  ["Download Android update"] = "Descargar actualización",
+  ["Update app manually"] = "Actualizar a mano",
+  ["Download full update"] = "Descargar actualización completa",
   ["Scan again"] = "Escanear de nuevo",
   ["Import ROM"] = "Importar ROM",
   ["Not supported yet"] = "Aún no compatible",
