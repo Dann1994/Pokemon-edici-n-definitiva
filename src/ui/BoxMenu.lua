@@ -38,6 +38,7 @@ local function monRow(game, mon, value)
     label = mon.nickname or def.name,
     sub = Strings(":L%d", mon.level),
     value = value,
+    mon = mon, -- UI LAYOUT = WIDE preview (ListMenu monPreview)
   }
 end
 
@@ -97,6 +98,7 @@ local function withdraw(game)
     -- DisplayMonListMenu draws LIST_MENU_BOX over the PC menu, which stays
     -- visible around it (home/list_menu.asm:29-31)
     itemBox = true,
+    monPreview = true,
     onChoose = function(item, list)
       if item.cancel then list:close() return end
       local mon = box[item.value]
@@ -147,6 +149,7 @@ local function deposit(game)
     noSound = true, -- PCMainMenu holds BIT_NO_MENU_BUTTON_SOUND (#570)
     kind = "pc_box_deposit",
     itemBox = true,
+    monPreview = true,
     onChoose = function(item, list)
       if item.cancel then list:close() return end
       local mon = game.save.party[item.value]
@@ -200,6 +203,7 @@ local function release(game)
     noSound = true, -- PCMainMenu holds BIT_NO_MENU_BUTTON_SOUND (#570)
     kind = "pc_box_release",
     itemBox = true,
+    monPreview = true,
     onChoose = function(item, list)
       if item.cancel then list:close() return end
       local mon = box[list.index]

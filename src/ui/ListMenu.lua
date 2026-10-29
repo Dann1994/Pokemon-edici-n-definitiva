@@ -150,6 +150,9 @@ function ListMenu.new(game, title, items, opts)
   -- and PrintText footers ("How many?", stored/withdrew) use the standard
   -- bottom text box -- same row budget as the mart, without the money box.
   self.messageBox = opts.messageBox
+  -- Bill's PC mon lists (BoxMenu.lua): UI LAYOUT = WIDE previews the
+  -- highlighted row's item.mon in the box's extra width (drawMonPreview)
+  self.monPreview = opts.monPreview or false
   self.money = opts.money          -- () -> current money for the box
   -- BIT_NO_MENU_BUTTON_SOUND (wMiscFlags): both PC sessions hold the flag
   -- for their whole run (engine/menus/pc.asm, engine/menus/players_pc.asm),
@@ -359,6 +362,56 @@ local function wantsWideItemBox(self)
   return r:wideItemTiles() > ITEM_BOX.tw
 end
 
+-- UI LAYOUT = WIDE, monPreview lists only (BACKLOG.md §1.9 phase 4): the
+-- room right of the classic box's own right edge (column 20), up to the
+-- widened box's inner border. Below MON_PREVIEW_MIN_TILES there is no room
+-- for a sprite plus a 9-letter Spanish type name, so the box just stays
+-- wide-and-empty the way phase 2 already left it.
+local MON_PREVIEW_MIN_TILES = 8
+local MON_PREVIEW_SPRITE_TOP, MON_PREVIEW_SPRITE_BOTTOM = 24, 64
+local MON_PREVIEW_TYPE_Y = 72
+
+local function monPreviewColumn(g)
+  local x0 = (ITEM_BOX.tx + ITEM_BOX.tw) * 8
+  local x1 = (g.tx + g.tw - 1) * 8
+  if (x1 - x0) / 8 < MON_PREVIEW_MIN_TILES then return nil end
+  return x0, x1
+end
+
+-- Sprite + TYPE1/TYPE2 of the highlighted row's mon, centred in its column.
+-- Own design (same idea as PartyMenu/PokedexMenu's panels, laid out for a
+-- shorter box). A true-color sprite skips PaletteFX.markTrueColor: this
+-- draws onto the wide item canvas, whose coordinates are not the UI
+-- canvas's ones that mark records.
+function ListMenu:drawMonPreview(x0, x1)
+  local item = self.items[self.index]
+  local mon = item and item.mon
+  if not mon then return end
+  local game = self.game
+  local def = game.data.pokemon and game.data.pokemon[mon.species]
+  if not def then return end
+  local WidePanel = require("src.ui.WidePanel")
+  local img = WidePanel.spriteImage(game, mon.species, { mon = mon })
+  if img then
+    local iw, ih = img:getDimensions()
+    local maxH = MON_PREVIEW_SPRITE_BOTTOM - MON_PREVIEW_SPRITE_TOP
+    local scale = math.min(1, maxH / ih, (x1 - x0) / iw)
+    local pw, ph = iw * scale, ih * scale
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(img, math.floor(x0 + ((x1 - x0) - pw) / 2),
+      MON_PREVIEW_SPRITE_BOTTOM - ph, 0, scale, scale)
+  end
+  local TypeChart = require("src.battle.TypeChart")
+  love.graphics.setColor(0, 0, 0, 1)
+  for i = 1, 2 do
+    local t = def.types and def.types[i]
+    if t and not (i == 2 and t == def.types[1]) then
+      Font.draw(fitLabel(TypeChart.displayName(t, game.data), x1 - x0),
+        x0, MON_PREVIEW_TYPE_Y + (i - 1) * 12)
+    end
+  end
+end
+
 -- PrintListMenuEntries, minus the price column StartMenu_Item never asks for
 -- (wPrintItemPrices = 0, engine/menus/start_sub_menus.asm)
 function ListMenu:drawItemBox()
@@ -373,9 +426,19 @@ function ListMenu:drawItemBox()
   local g = wide
     and itemGeometry(ITEM_BOX.tx, ITEM_BOX.ty, w / 8 - ITEM_BOX.tx, ITEM_BOX.th)
     or itemGeometry(ITEM_BOX.tx, ITEM_BOX.ty, ITEM_BOX.tw, ITEM_BOX.th)
+  local box = g
+  -- a mon preview keeps the rows (and their :L level) in classic columns
+  -- and spends everything right of them on the preview instead
+  local previewX0, previewX1
+  if wide and self.monPreview then
+    previewX0, previewX1 = monPreviewColumn(box)
+    if previewX0 then
+      g = itemGeometry(ITEM_BOX.tx, ITEM_BOX.ty, ITEM_BOX.tw, ITEM_BOX.th)
+    end
+  end
 
   love.graphics.setColor(1, 1, 1, 1)
-  Font.drawBox(g.tx, g.ty, g.tw, g.th)
+  Font.drawBox(box.tx, box.ty, box.tw, box.th)
   love.graphics.setColor(0, 0, 0, 1)
   if #self.items == 0 then
     Font.draw(Strings("Nothing here."), g.nameX, g.topY)
@@ -426,6 +489,7 @@ function ListMenu:drawItemBox()
      and (self.arrowBlink or 0) < ARROW_BLINK_ON then
     Font.drawCode(Theme.moreArrow, g.moreX, g.moreY)
   end
+  if previewX0 then self:drawMonPreview(previewX0, previewX1) end
   love.graphics.setColor(1, 1, 1, 1)
   if r then
     -- the bottom text box (below) is the classic 160-wide one PC prompts
@@ -434,7 +498,7 @@ function ListMenu:drawItemBox()
     -- closed out, straight onto the ordinary classic UI canvas, exactly
     -- where it always has.
     r:endWideItemPass(previous)
-    r:setWideItemAnchor(0, g.ty * 8, w, r.HEIGHT)
+    r:setWideItemAnchor(0, box.ty * 8, w, r.HEIGHT)
   end
   -- players_pc.asm:97/151/205 PrintText the prompt before DisplayListMenuID,
   -- so the bottom box sits under the list from the first frame
