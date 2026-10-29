@@ -46,6 +46,8 @@ function love.conf(t)
     local ok, Version = pcall(require, "src.core.Version")
     t.window.title = ok and Version.title()
       or "gen1recomp"
+    -- pokered-plus: title-bar / taskbar icon (tools/pokered_plus_pokebola_icon.py)
+    t.window.icon = "assets/logo/pokebola.png"
     -- Open at the launcher's design size (the split-screen ROM selector is
     -- laid out for 1024x768). The window is resizable and the 160x144 game
     -- canvas letterboxes into whatever size it ends up, so this only sets the

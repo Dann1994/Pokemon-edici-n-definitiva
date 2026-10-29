@@ -145,7 +145,8 @@ fi
 # One source of truth for every platform's launcher icon; iOS resizes the
 # same file in scripts/build_ios.sh (apply_ios_icon) and the Android res/
 # drawables are generated from it too.
-ICON_SRC="$ROOT/assets/logo/gen1recomp_cover.png"
+# pokered-plus: the fork's own Poké Ball (tools/pokered_plus_pokebola_icon.py)
+ICON_SRC="$ROOT/assets/logo/pokebola.png"
 
 # pipx installs peresed (Windows exe icon patcher) here, off the default PATH.
 PATH="$PATH:$HOME/.local/bin"

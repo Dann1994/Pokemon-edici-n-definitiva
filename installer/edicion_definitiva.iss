@@ -41,7 +41,8 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-UninstallDisplayIcon={app}\{#AppExe}
+SetupIconFile=pokebola.ico
+UninstallDisplayIcon={app}\pokebola.ico
 CloseApplications=yes
 
 [Languages]
@@ -55,11 +56,14 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; under the fork's name so the Start menu / taskbar read right
 Source: "{#SourceDir}\gen1recomp.exe"; DestDir: "{app}"; DestName: "{#AppExe}"; Flags: ignoreversion
 Source: "{#SourceDir}\*"; Excludes: "gen1recomp.exe"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; the Poké Ball the shortcuts point at, so they show it even when the CI
+; runner could not patch the exe's own icon resource (peresed missing)
+Source: "pokebola.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
+Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\pokebola.ico"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\pokebola.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
