@@ -72,7 +72,7 @@ jobs:
             echo "::error::game.love carries ROM-derived data"; exit 1
           fi
           unzip -p dist/payload/game.love src/core/Version.lua | grep -F 'engine = "${{ needs.version.outputs.version }}"'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: payload
           path: dist/payload/game.love
@@ -101,7 +101,7 @@ jobs:
           set -euo pipefail
           scripts/build.sh win --version "${{ needs.version.outputs.version }}" \
             --game-love dist/payload/game.love
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-zip
           path: dist/win/gen1recomp-win64.zip
@@ -129,7 +129,7 @@ jobs:
           if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress; }
           & $iscc "/DAppVersion=${{ needs.version.outputs.version }}" "/DSourceDir=$src" "/DOutputDir=$out" installer/edicion_definitiva.iss
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: installer
           path: dist/installer/*.exe
@@ -184,7 +184,7 @@ jobs:
             unzip -Z1 /tmp/g.love | grep -qx "mods/$m/manifest.json" \
               || { echo "::error::APK game.love is missing mods/$m"; exit 1; }
           done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: android-apk
           path: dist/android/release/*.apk
